@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLIVS — Ministry of Land, Bangladesh (Prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';document.head.appendChild(s);"></script>
+<style>
+:root{
+  --green-900:#062f24;
+  --green-800:#0a4433;
+  --green-700:#0b5e40;
+  --green-600:#0f7a4f;
+  --green-100:#e5f2ea;
+  --red-600:#c62031;
+  --red-100:#fbe6e8;
+  --gold-600:#a97b1f;
+  --gold-100:#f6ecd6;
+  --cream:#f6f3ea;
+  --paper:#ffffff;
+  --ink-900:#141f1a;
+  --ink-700:#3b4a43;
+  --ink-500:#647167;
+  --line:#dcd6c6;
+  --line-soft:#e9e4d6;
+  --radius:10px;
+  --shadow:0 2px 10px rgba(6,47,36,.08);
+  --shadow-lg:0 12px 32px rgba(6,47,36,.14);
+  --font-display:'Spectral',serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --font-bn-h:'Noto Serif Bengali',serif;
+  --font-bn:'Noto Sans Bengali',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--cream);
+  color:var(--ink-900);
+  font-family:var(--font-body);
+  line-height:1.5;
+  background-image:
+    linear-gradient(var(--cream),var(--cream)),
+    repeating-linear-gradient(0deg, rgba(11,94,64,.035) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgba(11,94,64,.035) 0 1px, transparent 1px 26px);
+}
+body.lang-bn{font-family:var(--font-bn)}
+.bn{font-family:var(--font-bn)}
+h1,h2,h3,.display{font-family:var(--font-display)}
+body.lang-bn h1,body.lang-bn h2,body.lang-bn h3,body.lang-bn .display{font-family:var(--font-bn-h)}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%}
+.container{max-width:1180px;margin:0 auto;padding:0 20px}
+.skiplink{position:absolute;left:-999px;top:0;background:#fff;padding:10px;z-index:999}
+.skiplink:focus{left:10px}
+
+/* ===== Topbar ===== */
+.topbar{background:var(--green-900);color:#eef7f1;font-size:13px}
+.topbar .container{display:flex;justify-content:space-between;align-items:center;height:36px;flex-wrap:wrap;gap:6px}
+.topbar-left{display:flex;gap:16px;align-items:center}
+.topbar a.helpline{color:#ffe9c2;font-weight:600;text-decoration:none}
+.topbar-right{display:flex;gap:14px;align-items:center}
+.topbar button.link{background:none;border:0;color:#dfeee5;font-size:13px;padding:2px 4px}
+.topbar button.link:hover{color:#fff;text-decoration:underline}
+.lang-switch{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:6px;padding:2px}
+.lang-switch button{background:none;border:0;color:#cfe4d8;padding:3px 9px;border-radius:5px;font-size:12.5px}
+.lang-switch button.active{background:#fff;color:var(--green-900);font-weight:700}
+
+/* ===== Header / nav ===== */
+.site-header{background:var(--paper);border-bottom:3px solid var(--green-700);position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.header-row{display:flex;align-items:center;gap:14px;padding:12px 0}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;cursor:pointer;background:none;border:0}
+.emblem{width:46px;height:46px;border-radius:50%;background:conic-gradient(from 210deg,var(--green-700),var(--green-600) 60%,var(--gold-600) 0);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:var(--font-display);font-size:18px;border:2px solid var(--green-900);flex:none}
+.brand-text .title-en{font-family:var(--font-display);font-weight:700;font-size:17px;line-height:1.15;color:var(--green-900)}
+.brand-text .title-bn{font-family:var(--font-bn-h);font-size:13px;color:var(--ink-700)}
+.header-row .spacer{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:7px;border:1px solid var(--green-700);background:var(--green-700);color:#fff;padding:9px 16px;font-size:14px;font-weight:600;transition:.15s}
+.btn:hover{background:var(--green-800);border-color:var(--green-800)}
+.btn.secondary{background:#fff;color:var(--green-800)}
+.btn.secondary:hover{background:var(--green-100)}
+.btn.outline{background:transparent;color:var(--green-800)}
+.btn.danger{background:var(--red-600);border-color:var(--red-600)}
+.btn.danger:hover{background:#a11a28}
+.btn.small{padding:6px 11px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%;justify-content:center}
+.navbar{border-top:1px solid var(--line-soft);overflow-x:auto}
+.navbar .container{display:flex;gap:2px}
+.navbar button{background:none;border:0;padding:11px 13px;font-size:13.5px;font-weight:600;color:var(--ink-700);white-space:nowrap;border-bottom:3px solid transparent}
+.navbar button:hover{color:var(--green-800)}
+.navbar button.active{color:var(--green-800);border-bottom-color:var(--gold-600)}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(180deg,var(--green-900),var(--green-700));color:#fff;padding:46px 0 60px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 2px, transparent 2px 22px);pointer-events:none}
+.hero-eyebrow{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:4px 12px;border-radius:20px;font-size:12px;letter-spacing:.04em;margin-bottom:14px}
+.hero h1{font-size:clamp(28px,4vw,44px);margin:0 0 10px;line-height:1.15}
+.hero p.lead{max-width:640px;color:#dcefe3;font-size:16px;margin:0 0 26px}
+.search-card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-lg);color:var(--ink-900);max-width:900px}
+.search-card h3{margin:0 0 4px;font-size:16px;color:var(--green-900)}
+.search-card .hint{font-size:12.5px;color:var(--ink-500);margin-bottom:14px}
+.search-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:760px){.search-grid{grid-template-columns:repeat(2,1fr)}}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--ink-700);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:9px 10px;font-size:14px;font-family:inherit;background:#fdfcf8}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--green-600);outline-offset:1px}
+.search-actions{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px}
+.error-text{color:var(--red-600);font-size:12.5px;margin-top:8px}
+
+/* ===== Sections/cards ===== */
+.section{padding:44px 0}
+.section.tight{padding:26px 0}
+.section-head{margin-bottom:22px}
+.section-head h2{margin:0 0 6px;font-size:26px;color:var(--green-900)}
+.section-head p{margin:0;color:var(--ink-500);font-size:14.5px}
+.card{background:var(--paper);border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:16px}
+.grid.cols-2{grid-template-columns:repeat(2,1fr)}
+.grid.cols-3{grid-template-columns:repeat(3,1fr)}
+.grid.cols-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.grid.cols-3,.grid.cols-4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr}}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.02em}
+.tag.demo{background:var(--gold-100);color:var(--gold-600);border:1px solid #e8d29c}
+.tag.green{background:var(--green-100);color:var(--green-800)}
+.tag.red{background:var(--red-100);color:var(--red-600)}
+.tag.gray{background:#eee;color:#555}
+.kv{display:grid;grid-template-columns:170px 1fr;gap:6px 12px;font-size:14px}
+.kv div.k{color:var(--ink-500)}
+.kv div.v{font-weight:600}
+.divider{height:1px;background:var(--line-soft);margin:16px 0}
+.quick-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* home feature list */
+.feature-card{border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px;background:#fff;cursor:pointer;text-align:left;height:100%}
+.feature-card:hover{border-color:var(--green-600);box-shadow:var(--shadow)}
+.feature-card .icon{width:38px;height:38px;border-radius:9px;background:var(--green-100);color:var(--green-800);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.feature-card h4{margin:0 0 5px;font-size:15px}
+.feature-card p{margin:0;font-size:13px;color:var(--ink-500)}
+
+/* stat / kpi */
+.kpi{background:#fff;border:1px solid var(--line-soft);border-radius:var(--radius);padding:16px}
+.kpi .num{font-family:var(--font-display);font-size:28px;color:var(--green-900);font-weight:700}
+.kpi .label{font-size:12.5px;color:var(--ink-500)}
+
+/* timeline */
+.timeline{position:relative;padding-left:26px}
+.timeline:before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;margin-bottom:22px}
+.tl-item:before{content:"";position:absolute;left:-26px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--green-600);border:3px solid #fff;box-shadow:0 0 0 2px var(--green-600)}
+.tl-item.done:before{background:var(--green-600)}
+.tl-item.current:before{background:var(--gold-600);box-shadow:0 0 0 2px var(--gold-600)}
+.tl-item.pending:before{background:#cbd3ce;box-shadow:0 0 0 2px #cbd3ce}
+.tl-item h5{margin:0 0 2px;font-size:14.5px}
+.tl-item .meta{font-size:12.5px;color:var(--ink-500)}
+
+/* tables */
+table.data{width:100%;border-collapse:collapse;font-size:13.5px}
+table.data th{text-align:left;background:var(--green-100);color:var(--green-900);padding:9px 10px;font-size:12.5px}
+table.data td{padding:9px 10px;border-bottom:1px solid var(--line-soft)}
+table.data tr:hover td{background:#faf9f3}
+
+/* forms */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:640px){.form-row{grid-template-columns:1fr}}
+.step-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.step-pill{font-size:12px;padding:5px 11px;border-radius:16px;background:#eee;color:#666;font-weight:600}
+.step-pill.active{background:var(--green-700);color:#fff}
+.step-pill.done{background:var(--green-100);color:var(--green-800)}
+
+/* payment */
+.method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.method-card{border:2px solid var(--line-soft);border-radius:var(--radius);padding:14px 10px;text-align:center;background:#fff}
+.method-card.selected{border-color:var(--green-600);background:var(--green-100)}
+.method-card .logo{font-weight:800;font-size:15px;margin-bottom:4px}
+
+/* chat */
+.chat-window{height:420px;overflow-y:auto;border:1px solid var(--line-soft);border-radius:var(--radius);padding:14px;background:#fdfcf8;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:78%;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.45}
+.msg.user{align-self:flex-end;background:var(--green-700);color:#fff;border-bottom-right-radius:2px}
+.msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--line-soft);border-bottom-left-radius:2px}
+.chat-suggest{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:6px 11px}
+.chip:hover{border-color:var(--green-600)}
+
+/* toasts */
+#toast-root{position:fixed;top:14px;right:14px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink-900);color:#fff;padding:11px 16px;border-radius:8px;font-size:13.5px;box-shadow:var(--shadow-lg);max-width:320px;animation:slide .2s ease}
+.toast.success{background:var(--green-700)}
+.toast.error{background:var(--red-600)}
+@keyframes slide{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* footer */
+.site-footer{background:var(--green-900);color:#dcefe3;padding:36px 0 18px;margin-top:40px}
+.site-footer h5{color:#fff;font-size:14px;margin:0 0 10px}
+.site-footer ul{list-style:none;padding:0;margin:0;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.site-footer a{text-decoration:none;color:#cfe4d8}
+.site-footer a:hover{color:#fff}
+.footer-notice{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.15);font-size:12.5px;color:#b9d4c4}
+.helpline-big{font-family:var(--font-display);font-size:22px;color:#ffe9c2;font-weight:700}
+
+/* map */
+#leafmap{height:420px;border-radius:var(--radius);border:1px solid var(--line-soft)}
+.plot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.plot{border:2px dashed #9db9ab;background:#eef6f0;border-radius:8px;padding:14px 8px;text-align:center;font-size:12.5px}
+.plot:hover{border-color:var(--green-700);background:var(--green-100)}
+.plot.selected{border-style:solid;border-color:var(--green-700);background:var(--green-100)}
+.plot .dag{font-weight:700;font-family:var(--font-mono);font-size:14px;color:var(--green-900)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(6,20,15,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal{background:#fff;border-radius:var(--radius);max-width:480px;width:100%;padding:22px;box-shadow:var(--shadow-lg)}
+
+/* login */
+.login-wrap{max-width:820px;margin:40px auto}
+@media(max-width:700px){.login-wrap .grid.cols-2{grid-template-columns:1fr}.login-wrap .grid.cols-4{grid-template-columns:repeat(2,1fr)}}
+.demo-account{border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:8px;background:#fdfcf8}
+
+.notif-item{display:flex;gap:10px;padding:12px;border-bottom:1px solid var(--line-soft)}
+.notif-item.unread{background:#f4faf6}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gold-600);margin-top:6px;flex:none}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--ink-500)}
+.empty-state .icon{font-size:34px;margin-bottom:10px}
+
+.receipt{border:1px solid var(--line);border-radius:8px;padding:20px;background:#fff;font-family:var(--font-mono);font-size:13px}
+.receipt h4{font-family:var(--font-display);margin-top:0}
+
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff}
+}
+.helper-note{font-size:12.5px;color:var(--ink-500);background:var(--gold-100);border:1px solid #e8d29c;border-radius:7px;padding:9px 12px}
+.disclaimer-box{background:var(--red-100);border:1px solid #eabcc0;border-radius:8px;padding:12px 14px;font-size:13px;color:#7c1620}
+label.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-700)}
+
+</style>
+</head>
+<body>
+<div id="toast-root"></div>
+<div id="app"></div>
+<script>
+// ============ DEMO DATABASE (all internally consistent — for university prototype only) ============
+
+const DISTRICTS = ["Dhaka","Chattogram","Rajshahi","Khulna","Sylhet","Barishal","Rangpur","Mymensingh"];
+
+const PROPERTIES = [
+  {
+    id: "PROP-001",
+    district: "Dhaka", upazila: "Savar", mouza: "Amin Bazar", village: "Amin Bazar",
+    khatian: "CS-4587", dag: "1024", area: "5.00 Bigha", classification: "Agricultural",
+    surveyType: "RS (Revisional Survey)", owner: "Md. Rahim Uddin",
+    latlng: [23.8583, 90.2650],
+    taxStatus: "Due",
+    ownershipHistory: [
+      { year: 1988, owner: "Abdul Majid", type: "Original recorded ownership", ref: "CS Khatian 4587", mutationRef: "—", notes: "First cadastral (CS) record of the plot." },
+      { year: 2002, owner: "Mohammad Karim", type: "Inheritance / transfer", ref: "Heirship Deed 220/2002", mutationRef: "MUT-2002-1187", notes: "Transferred to legal heir after original owner's death." },
+      { year: 2017, owner: "Md. Rahim Uddin", type: "Registered sale deed", ref: "Deed No. 4432/2017 (Savar Sub-Registry)", mutationRef: "MUT-2017-5502", notes: "Sold to current owner; mutation completed same year." },
+      { year: 2026, owner: "Md. Rahim Uddin", type: "Current record", ref: "Khatian CS-4587 (active)", mutationRef: "MUT-2026-003821 (in progress — see Application Tracking)", notes: "Currently under a fresh mutation request for a partial re-survey correction." }
+    ],
+    dispute: null,
+    documents: [
+      { name: "Khatian Copy (CS-4587)", type: "Record of Rights" },
+      { name: "Mouza Map Extract — Amin Bazar", type: "Cadastral Map" },
+      { name: "Registered Deed 4432/2017", type: "Deed" },
+      { name: "DCR — Mutation 2017", type: "Duplicate Carbon Receipt" }
+    ]
+  },
+  {
+    id: "PROP-002",
+    district: "Chattogram", upazila: "Hathazari", mouza: "Fatehabad", village: "Fatehabad",
+    khatian: "SA-2314", dag: "785", area: "2.50 Bigha", classification: "Residential",
+    surveyType: "SA (State Acquisition Survey)", owner: "Fatema Akter",
+    latlng: [22.4691, 91.7853],
+    taxStatus: "Paid",
+    ownershipHistory: [
+      { year: 1975, owner: "Nurul Islam", type: "Original recorded ownership", ref: "SA Khatian 2314", mutationRef: "—", notes: "Recorded under State Acquisition Survey." },
+      { year: 2009, owner: "Fatema Akter", type: "Gift deed", ref: "Deed No. 118/2009 (Hathazari Sub-Registry)", mutationRef: "MUT-2009-0876", notes: "Gifted from father to daughter." }
+    ],
+    dispute: { ref: "LD-2026-00145", status: "Under Review", issue: "Boundary dispute with adjoining Dag 786" },
+    documents: [
+      { name: "Khatian Copy (SA-2314)", type: "Record of Rights" },
+      { name: "Gift Deed 118/2009", type: "Deed" }
+    ]
+  },
+  {
+    id: "PROP-003",
+    district: "Rajshahi", upazila: "Paba", mouza: "Damkura", village: "Damkura",
+    khatian: "RS-7812", dag: "445", area: "3.75 Bigha", classification: "Agricultural",
+    surveyType: "RS (Revisional Survey)", owner: "Abdul Karim",
+    latlng: [24.3745, 88.5657],
+    taxStatus: "Paid",
+    ownershipHistory: [
+      { year: 1991, owner: "Sultan Ahmed", type: "Original recorded ownership", ref: "RS Khatian 7812", mutationRef: "—", notes: "First revisional survey record." },
+      { year: 2013, owner: "Abdul Karim", type: "Registered sale deed", ref: "Deed No. 906/2013 (Paba Sub-Registry)", mutationRef: "MUT-2013-2290", notes: "Purchased by current owner." }
+    ],
+    dispute: null,
+    documents: [
+      { name: "Khatian Copy (RS-7812)", type: "Record of Rights" },
+      { name: "Mutation Order 2013", type: "Mutation Order" }
+    ]
+  },
+  {
+    id: "PROP-004",
+    district: "Khulna", upazila: "Dumuria", mouza: "Ranai", village: "Ranai",
+    khatian: "BS-1102", dag: "220", area: "1.20 Bigha", classification: "Commercial",
+    surveyType: "BS (Bangladesh Survey)", owner: "Nasrin Begum",
+    latlng: [22.8456, 89.4979],
+    taxStatus: "Due",
+    ownershipHistory: [
+      { year: 1999, owner: "Nasrin Begum", type: "Original recorded ownership", ref: "BS Khatian 1102", mutationRef: "—", notes: "Recorded under the latest Bangladesh Survey." }
+    ],
+    dispute: null,
+    documents: [ { name: "Khatian Copy (BS-1102)", type: "Record of Rights" } ]
+  },
+  {
+    id: "PROP-005",
+    district: "Sylhet", upazila: "Beanibazar", mouza: "Mathiura", village: "Mathiura",
+    khatian: "CS-6633", dag: "90", area: "4.00 Bigha", classification: "Agricultural",
+    surveyType: "CS (Cadastral Survey)", owner: "Shamsul Haque",
+    latlng: [24.7166, 92.1264],
+    taxStatus: "Due",
+    ownershipHistory: [
+      { year: 1965, owner: "Haji Ismail", type: "Original recorded ownership", ref: "CS Khatian 6633", mutationRef: "—", notes: "Original cadastral record." },
+      { year: 1994, owner: "Kamal Uddin", type: "Inheritance", ref: "Heirship record", mutationRef: "MUT-1994-330", notes: "Passed to next generation." },
+      { year: 2020, owner: "Shamsul Haque", type: "Registered sale deed", ref: "Deed No. 77/2020 (Beanibazar Sub-Registry)", mutationRef: "MUT-2026-004150 (in progress)", notes: "Purchased in 2020; mutation filed 2026." }
+    ],
+    dispute: null,
+    documents: [ { name: "Khatian Copy (CS-6633)", type: "Record of Rights" }, { name: "Deed 77/2020", type: "Deed" } ]
+  },
+  {
+    id: "PROP-006",
+    district: "Barishal", upazila: "Bakerganj", mouza: "Padri Shibpur", village: "Padri Shibpur",
+    khatian: "SA-990", dag: "512", area: "0.85 Bigha", classification: "Residential",
+    surveyType: "SA (State Acquisition Survey)", owner: "Jasmine Aktar",
+    latlng: [22.5624, 90.3413],
+    taxStatus: "Paid",
+    ownershipHistory: [
+      { year: 1982, owner: "Jasmine Aktar", type: "Original recorded ownership", ref: "SA Khatian 990", mutationRef: "—", notes: "Recorded ownership, unchanged since." }
+    ],
+    dispute: null,
+    documents: [ { name: "Khatian Copy (SA-990)", type: "Record of Rights" } ]
+  }
+];
+
+// Demo mouza plot grid for "Amin Bazar" (Savar, Dhaka) — used on the Digital Land Map page
+const DEMO_MOUZA_PLOTS = [
+  { dag: "1020", khatian: "CS-4501", owner: "Jamal Uddin (sample)", area: "1.10 Bigha", classification: "Agricultural", taxStatus: "Paid", real: false },
+  { dag: "1021", khatian: "CS-4522", owner: "Rina Begum (sample)", area: "0.90 Bigha", classification: "Residential", taxStatus: "Due", real: false },
+  { dag: "1022", khatian: "CS-4540", owner: "Selim Reza (sample)", area: "2.00 Bigha", classification: "Agricultural", taxStatus: "Paid", real: false },
+  { dag: "1023", khatian: "CS-4560", owner: "Ayesha Khatun (sample)", area: "1.50 Bigha", classification: "Commercial", taxStatus: "Due", real: false },
+  { dag: "1024", khatian: "CS-4587", owner: "Md. Rahim Uddin", area: "5.00 Bigha", classification: "Agricultural", taxStatus: "Due", real: true, propId: "PROP-001" },
+  { dag: "1025", khatian: "CS-4600", owner: "Kamrul Hasan (sample)", area: "1.25 Bigha", classification: "Agricultural", taxStatus: "Paid", real: false },
+  { dag: "1026", khatian: "CS-4615", owner: "Nasima Aktar (sample)", area: "0.75 Bigha", classification: "Residential", taxStatus: "Paid", real: false },
+  { dag: "1027", khatian: "CS-4630", owner: "Habibur Rahman (sample)", area: "1.80 Bigha", classification: "Agricultural", taxStatus: "Due", real: false },
+  { dag: "1028", khatian: "CS-4650", owner: "Shirin Sultana (sample)", area: "1.00 Bigha", classification: "Agricultural", taxStatus: "Paid", real: false }
+];
+
+const APPLICATIONS = [
+  { id: "MUT-2026-003821", propId: "PROP-001", type: "Mutation (Namjari)", stage: 4, submitted: "2026-06-02",
+    stages: ["Application Submitted","Document Verification","Field Verification","Officer Review","Approved / Rejected"] },
+  { id: "MUT-2026-004150", propId: "PROP-005", type: "Mutation (Namjari)", stage: 2, submitted: "2026-07-14",
+    stages: ["Application Submitted","Document Verification","Field Verification","Officer Review","Approved / Rejected"] },
+  { id: "MUT-2026-002093", propId: "PROP-003", type: "Mutation (Namjari)", stage: 5, submitted: "2026-03-11", result: "Approved",
+    stages: ["Application Submitted","Document Verification","Field Verification","Officer Review","Approved / Rejected"] }
+];
+
+let COMPLAINTS = [
+  { id: "CMP-2026-008721", propId: "PROP-002", category: "Boundary issue", name: "Fatema Akter", mobile: "01711-000000",
+    description: "The neighbouring plot owner has shifted the boundary marker of Dag 785 by approximately 3 feet.",
+    status: 2, submitted: "2026-07-01",
+    stages: ["Submitted","Under Review","Investigation","Resolved"] }
+];
+
+let PAYMENTS = [
+  { txnId: "LDT-2026-004582", propId: "PROP-002", type: "Land Development Tax (Khajna)", amount: 2450, method: "bKash — Demo", date: "2026-08-10", status: "Paid" },
+  { txnId: "LDT-2026-004410", propId: "PROP-006", type: "Land Development Tax (Khajna)", amount: 1120, method: "Nagad — Demo", date: "2026-07-22", status: "Paid" },
+  { txnId: "LDT-2026-004201", propId: "PROP-003", type: "Land Development Tax (Khajna)", amount: 1875, method: "Bank — Demo", date: "2026-06-15", status: "Paid" }
+];
+
+let NOTIFICATIONS = [
+  { id: 1, en: "Your mutation application MUT-2026-003821 has moved to Officer Review.", bn: "আপনার নামজারি আবেদন MUT-2026-003821 কর্মকর্তার পর্যালোচনায় স্থানান্তরিত হয়েছে।", read: false },
+  { id: 2, en: "Payment successful — Transaction LDT-2026-004582.", bn: "পেমেন্ট সফল হয়েছে — লেনদেন LDT-2026-004582।", read: false },
+  { id: 3, en: "Land Development Tax due for PROP-001 (Amin Bazar, Savar).", bn: "PROP-001 (আমিন বাজার, সাভার) এর জন্য ভূমি উন্নয়ন কর বকেয়া রয়েছে।", read: true },
+  { id: 4, en: "Complaint CMP-2026-008721 status updated to Investigation.", bn: "অভিযোগ CMP-2026-008721 এর অবস্থা তদন্ত-এ আপডেট হয়েছে।", read: true },
+  { id: 5, en: "Document ready for download: Khatian Copy (CS-4587).", bn: "ডাউনলোডের জন্য দলিল প্রস্তুত: খতিয়ান কপি (CS-4587)।", read: true }
+];
+
+const DEMO_USERS = {
+  citizen: { mobile: "01700000000", password: "demo123", name: "Md. Rahim Uddin", properties: ["PROP-001","PROP-005"] },
+  officer: { username: "officer", password: "demo123", name: "AC (Land), Savar Upazila" }
+};
+
+// AI Assistant demo knowledge base (bilingual keyword matching, works with no external API)
+const AI_KB = [
+  { kw_en: ["pay khajna","land tax","pay tax","how can i pay khajna","how do i pay land tax"],
+    kw_bn: ["খাজনা","কর দিব","কর দিব কিভাবে"],
+    en: "Go to Tax / Khajna from the main menu, select your property, review the amount due, and press Pay Now. You can pay by bKash, Rocket, Nagad, card, or bank in this demo.",
+    bn: "প্রধান মেনু থেকে 'কর/খাজনা' পাতায় যান, আপনার জমি নির্বাচন করুন, বকেয়া পরিমাণ দেখুন এবং 'এখনই পরিশোধ করুন' চাপুন। এই ডেমোতে আপনি বিকাশ, রকেট, নগদ, কার্ড বা ব্যাংকের মাধ্যমে পরিশোধ করতে পারবেন।" },
+  { kw_en: ["check my khatian","find khatian","khatian number","how can i check my khatian"],
+    kw_bn: ["খতিয়ান"],
+    en: "Use 'Search Your Land' on the homepage with your District, Upazila, Mouza and Khatian number (or Dag number). The matching land record and khatian details will appear in the Land Profile.",
+    bn: "হোমপেজের 'আপনার জমি খুঁজুন' অংশে জেলা, উপজেলা, মৌজা এবং খতিয়ান নম্বর (অথবা দাগ নম্বর) দিন। মিলে যাওয়া রেকর্ডটি ল্যান্ড প্রোফাইলে দেখা যাবে।" },
+  { kw_en: ["apply for mutation","mutation","namjari","how do i apply for mutation"],
+    kw_bn: ["নামজারি","মিউটেশন"],
+    en: "Open your property's Land Profile and choose 'View Mutation', or go to Application Tracking to check an existing mutation (namjari) application. New applications in the real system are filed with the AC (Land) office along with your deed, khatian copy, tax receipts, and NID.",
+    bn: "আপনার জমির প্রোফাইল থেকে 'মিউটেশন দেখুন' নির্বাচন করুন, অথবা 'আবেদন ট্র্যাকিং' পাতায় চলমান নামজারি আবেদন যাচাই করুন। প্রকৃত ব্যবস্থায় নতুন আবেদন দলিল, খতিয়ান কপি, কর রশিদ ও এনআইডি সহ এসি (ল্যান্ড) অফিসে জমা দিতে হয়।" },
+  { kw_en: ["track my application","application status","track application","how can i track my application"],
+    kw_bn: ["আবেদন ট্র্যাক", "আবেদনের অবস্থা"],
+    en: "Go to Application Tracking and enter your Application ID (for example MUT-2026-003821) to see the current stage of your request.",
+    bn: "'আবেদন ট্র্যাকিং' পাতায় গিয়ে আপনার আবেদন আইডি (যেমন MUT-2026-003821) লিখুন, তাহলে আবেদনের বর্তমান ধাপ দেখতে পাবেন।" },
+  { kw_en: ["record is incorrect","wrong record","incorrect land record","my land record is incorrect"],
+    kw_bn: ["রেকর্ড ভুল","ভুল তথ্য"],
+    en: "If your land record looks incorrect, open Complaints & Disputes and submit a report under 'Incorrect land record.' You will receive a Complaint Reference Number to track the correction.",
+    bn: "আপনার জমির রেকর্ড ভুল মনে হলে 'অভিযোগ ও বিরোধ' পাতায় গিয়ে 'ভুল জমি রেকর্ড' বিভাগে অভিযোগ জমা দিন। আপনি একটি অভিযোগ নম্বর পাবেন যা দিয়ে অগ্রগতি ট্র্যাক করতে পারবেন।" },
+  { kw_en: ["find my dag number","dag number","how can i find my dag number"],
+    kw_bn: ["দাগ নম্বর"],
+    en: "Your Dag (plot) number is printed on your khatian and mouza map. If you don't have these documents, use Search Your Land with District, Upazila, Mouza and your name to look it up in this demo database.",
+    bn: "আপনার দাগ নম্বর খতিয়ান ও মৌজা মানচিত্রে লেখা থাকে। এই কাগজ না থাকলে, 'আপনার জমি খুঁজুন' অপশনে জেলা, উপজেলা, মৌজা ও নাম দিয়ে এই ডেমো ডেটাবেসে খুঁজে দেখুন।" },
+  { kw_en: ["previous owners","ownership history","check previous owners","how can i check previous owners"],
+    kw_bn: ["পূর্ববর্তী মালিক","মালিকানার ইতিহাস"],
+    en: "Open the property's Land Profile and select 'Ownership History' to see a chronological timeline of previous owners, transfer types, and mutation references.",
+    bn: "জমির প্রোফাইল থেকে 'মালিকানার ইতিহাস' নির্বাচন করুন, সেখানে পূর্ববর্তী মালিক, হস্তান্তরের ধরন ও মিউটেশন রেফারেন্স সময়ক্রম অনুযায়ী দেখা যাবে।" },
+  { kw_en: ["submit a complaint","file a complaint","how can i submit a complaint"],
+    kw_bn: ["অভিযোগ জমা", "অভিযোগ করব"],
+    en: "Go to Complaints & Disputes, fill in your details and the issue category, and submit. You'll get a Complaint Reference Number (e.g. CMP-2026-008721) to track the status.",
+    bn: "'অভিযোগ ও বিরোধ' পাতায় গিয়ে আপনার তথ্য ও সমস্যার ধরন দিয়ে জমা দিন। আপনি একটি অভিযোগ রেফারেন্স নম্বর (যেমন CMP-2026-008721) পাবেন, যা দিয়ে অবস্থা দেখা যাবে।" },
+  { kw_en: ["get help","help regarding land","where can i get help"],
+    kw_bn: ["সাহায্য","কোথায় সাহায্য পাব"],
+    en: "Visit the Help & Support page, or call the Ministry of Land helpline 16122 for official assistance.",
+    bn: "'সহায়তা' পাতায় যান, অথবা সরকারি সহায়তার জন্য ভূমি মন্ত্রণালয়ের হটলাইন 16122 নম্বরে কল করুন।" },
+  { kw_en: ["documents needed for mutation","mutation documents","what documents"],
+    kw_bn: ["নামজারির কাগজপত্র","কি কাগজ লাগে"],
+    en: "Generally required: the registered deed, khatian/porcha copy, previous tax receipts, and National ID (NID). Requirements can vary — please confirm with your local AC (Land) office.",
+    bn: "সাধারণত প্রয়োজন হয়: রেজিস্ট্রিকৃত দলিল, খতিয়ান/পর্চা কপি, পূর্ববর্তী কর রশিদ এবং জাতীয় পরিচয়পত্র (এনআইডি)। প্রয়োজনীয়তা ভিন্ন হতে পারে — স্থানীয় এসি (ল্যান্ড) অফিসে নিশ্চিত করুন।" }
+];
+
+</script>
+<script>
+const I18N = {
+  en: {
+    ministry: "Ministry of Land", govt: "Government of the People's Republic of Bangladesh",
+    helpline: "Land Service Helpline", accessibility: "Accessibility", help: "Help",
+    login: "Login / Citizen Portal", logout: "Log out",
+    nav_home:"Home", nav_search:"Search Your Land", nav_map:"Land Map", nav_services:"Services",
+    nav_payments:"Payments", nav_complaints:"Complaints & Disputes", nav_documents:"Documents",
+    nav_ai:"AI Assistant", nav_help:"Help", nav_track:"Track Application", nav_deed:"Digital Deed",
+    nav_dashboard:"Dashboard", nav_notifications:"Notifications", nav_about:"About",
+    hero_eyebrow:"Proposed Digital Land Management System — University Prototype",
+    hero_title:"Your Land, Your Information, Your Rights",
+    hero_lead:"A citizen-focused proposal for a unified National Land Information and Verification System (NLIVS) for the Ministry of Land, Bangladesh.",
+    search_title:"Search Your Land", search_hint:"Enter at least one detail below. This demo searches a sample dataset of land records, not the real Ministry database.",
+    district:"District", upazila:"Upazila", mouza:"Mouza", khatian:"Khatian Number", dag:"Dag / Plot Number", owner:"Owner Name",
+    search_btn:"Search Land Records", clear:"Clear", searching:"Searching land records...",
+    no_criteria:"Please enter at least one search criterion.", no_results:"No land record found matching your search criteria.",
+    results_found:"record(s) found", view_profile:"View Land Profile",
+    demo_data_notice:"All records shown are sample/demo data created for this university prototype.",
+    quick_actions:"Quick Actions", view_map:"View Map", ownership_history:"Ownership History", pay_khajna:"Pay Khajna",
+    view_tax:"View Tax", view_documents:"View Documents", view_mutation:"View Mutation", report_problem:"Report a Problem",
+    prepare_document:"Prepare Document", property_info:"Property Information", land_area:"Land Area",
+    classification:"Land Classification", survey_type:"Survey Type", current_owner:"Current Owner",
+    dispute_status:"Dispute Status", no_dispute:"No active dispute", active_dispute:"Active Dispute",
+    case_ref:"Case Reference", status:"Status", issue:"Issue",
+    ownership_history_title:"Ownership History", ownership_history_sub:"Chronological record of ownership for this property.",
+    prev_owner:"Owner", transaction:"Transaction", transfer_date:"Year", reference:"Reference",
+    mutation_ref:"Mutation Reference", notes:"Notes",
+    map_title:"Digital Land Map", map_sub:"Demonstration Map — Sample GIS Data (not official cadastral data)",
+    map_note:"This is a demonstration mouza map with sample plot boundaries created for this university prototype. It does not represent the Ministry's official cadastral GIS database.",
+    select_plot:"Select a plot to view its details", plot_info:"Plot Information", sample_plot:"Sample plot (demo)",
+    tax_title:"Land Development Tax / Khajna", tax_sub:"Select a property to view Land Development Tax details.",
+    select_property:"Select Property", holding_id:"Holding / Property ID", tax_year:"Tax Year", previous_dues:"Previous Dues",
+    current_tax:"Current Year Tax", late_fee:"Late Fee", total_payable:"Total Payable", payment_status:"Payment Status",
+    pay_now:"Pay Now", other_fees_title:"Other Land-Related Fees", demo_amount:"Demo Amount",
+    fees_note:"Actual fees depend on applicable government rules. Amounts shown here are for demonstration only.",
+    payments_title:"Payments", payments_sub:"A safe, simulated payment flow. No real financial information is collected.",
+    select_method:"1. Select Payment Method", review_amount:"2. Review Amount", confirm_payment:"Confirm Payment",
+    processing:"Processing your demo payment...", payment_success:"Payment completed successfully.",
+    transaction_id:"Transaction ID", amount:"Amount", date:"Date", method:"Payment Method",
+    download_receipt:"Download / Print Receipt", payment_history:"Payment History", back:"Back", next:"Next",
+    demo_payment_label:"DEMO PAYMENT — no real funds are transferred",
+    complaints_title:"Complaints & Disputes", complaints_sub:"Report an issue related to your land record.",
+    applicant_name:"Applicant Name", mobile_number:"Mobile Number", property_optional:"Property (optional)",
+    complaint_category:"Complaint Category", description:"Description", preferred_contact:"Preferred Contact Method",
+    submit:"Submit", submitted_ref:"Your complaint has been submitted. Reference Number:",
+    track_complaint:"Track a Complaint", enter_complaint_ref:"Enter Complaint Reference Number",
+    track_btn:"Track", not_found:"No record found for this reference number.",
+    deed_title:"Digital Deed Preparation", deed_sub:"A guided document-preparation tool. This does NOT legally register a deed.",
+    deed_disclaimer:"This document is a draft/preparation tool for demonstration purposes. It does not constitute legal registration, authentication, or transfer of ownership. Actual land documents must follow the legally required verification, registration, and authentication procedures.",
+    seller:"Seller", buyer:"Buyer", land_details:"Land", transaction_details:"Transaction", witnesses:"Witnesses", review:"Review",
+    full_name:"Full Name", nid_placeholder:"NID Number (demo field)", address:"Address", contact:"Contact Number",
+    sale_value:"Sale / Transfer Value (৳)", transaction_type:"Transaction Type", payment_info:"Payment Information",
+    witness1:"Witness 1 Name", witness2:"Witness 2 Name", generate_draft:"Generate Draft", print:"Print", download:"Download",
+    documents_title:"Documents", documents_sub:"Documents associated with a searched property.",
+    track_app_title:"Application Tracking", enter_app_id:"Enter Application ID", app_not_found:"No application found with this ID.",
+    notifications_title:"Notifications", mark_read:"Mark as read", mark_all_read:"Mark all as read", no_notifications:"No notifications.",
+    ai_title:"AI Land Assistant", ai_sub:"Ask about Khajna, mutation, complaints, documents, and more — in English or বাংলা.",
+    ai_placeholder:"Type your question in English or Bangla…", ai_send:"Send", ai_demo_mode:"Demo Assistant Mode — no live AI service connected",
+    ai_intro:"Hello! I'm the AI Land Assistant (demo mode). Ask me about Khajna, mutation, complaints, or land documents.",
+    ai_fallback:"I don't have a specific demo answer for that yet. For official assistance, call the Ministry of Land hotline: 16122.",
+    ai_hotline_suffix:"For official assistance, call the Ministry of Land hotline: 16122.",
+    help_title:"Help & Support", about_title:"About the System",
+    citizen_dashboard:"Citizen Dashboard", my_properties:"My Properties", applications:"Applications", due:"Due", paid:"Paid",
+    admin_dashboard:"Administrative / MIS Dashboard", total_properties:"Total Registered Properties", total_records:"Total Land Records",
+    pending_mutations:"Pending Mutations", resolved_complaints:"Resolved Complaints", active_disputes:"Active Disputes",
+    tax_collected:"Tax Collected", outstanding_tax:"Outstanding Tax", applications_processed:"Applications Processed",
+    apps_by_district:"Applications by District", tax_trend:"Tax Collection Trend (last 6 months)",
+    mutation_status_chart:"Mutation Processing Status", complaint_categories_chart:"Complaint Categories",
+    records_by_class:"Land Records by Classification", district_activity:"District-level Activity",
+    login_title:"Log In", citizen_login:"Citizen Login", officer_login:"Officer Login", password:"Password",
+    username:"Username", demo_account:"Demo Account", use_demo:"Use this demo account",
+    monitoring_title:"System Monitoring Dashboard", monitoring_sub:"Sample/demo status data — no live monitoring service is connected in this prototype.",
+    monitoring_uptime:"System Uptime (Demo)", monitoring_sessions:"Active Demo Sessions", monitoring_api:"API Status", monitoring_db:"Database Status",
+    monitoring_api_val:"Simulated — OK", monitoring_db_val:"Simulated — OK",
+    footer_notice:"This website is a university project prototype demonstrating a proposed digital land management information system. It is not an official Ministry of Land service portal.",
+    footer_about:"About", footer_services:"Services", footer_privacy:"Privacy", footer_accessibility:"Accessibility", footer_contact:"Contact",
+    home_search_field_note:"Provide at least one field — e.g. District + Mouza + Khatian.",
+    view_all:"View all", back_home:"Back to Home", stage:"Stage", filter_by_district:"Filter by district", all_districts:"All Districts",
+    success:"Success", error:"Error",
+  },
+  bn: {
+    ministry: "ভূমি মন্ত্রণালয়", govt: "গণপ্রজাতন্ত্রী বাংলাদেশ সরকার",
+    helpline: "ভূমি সেবা হটলাইন", accessibility: "প্রবেশযোগ্যতা", help: "সাহায্য",
+    login: "লগইন / নাগরিক পোর্টাল", logout: "লগ আউট",
+    nav_home:"হোম", nav_search:"আপনার জমি খুঁজুন", nav_map:"ভূমি মানচিত্র", nav_services:"সেবাসমূহ",
+    nav_payments:"পেমেন্ট", nav_complaints:"অভিযোগ ও বিরোধ", nav_documents:"দলিলপত্র",
+    nav_ai:"এআই সহায়ক", nav_help:"সাহায্য", nav_track:"আবেদন ট্র্যাক করুন", nav_deed:"ডিজিটাল দলিল",
+    nav_dashboard:"ড্যাশবোর্ড", nav_notifications:"বিজ্ঞপ্তি", nav_about:"সিস্টেম সম্পর্কে",
+    hero_eyebrow:"প্রস্তাবিত ডিজিটাল ভূমি ব্যবস্থাপনা সিস্টেম — বিশ্ববিদ্যালয় প্রোটোটাইপ",
+    hero_title:"আপনার জমি, আপনার তথ্য, আপনার অধিকার",
+    hero_lead:"বাংলাদেশ ভূমি মন্ত্রণালয়ের জন্য একটি নাগরিক-কেন্দ্রিক জাতীয় ভূমি তথ্য ও যাচাই ব্যবস্থা (NLIVS) প্রস্তাবনা।",
+    search_title:"আপনার জমি খুঁজুন", search_hint:"নিচে অন্তত একটি তথ্য দিন। এই ডেমো একটি নমুনা ডেটাসেটে অনুসন্ধান করে, প্রকৃত মন্ত্রণালয়ের ডেটাবেসে নয়।",
+    district:"জেলা", upazila:"উপজেলা", mouza:"মৌজা", khatian:"খতিয়ান নম্বর", dag:"দাগ নম্বর", owner:"মালিকের নাম",
+    search_btn:"জমির রেকর্ড খুঁজুন", clear:"মুছুন", searching:"জমির রেকর্ড খোঁজা হচ্ছে...",
+    no_criteria:"অনুগ্রহ করে অন্তত একটি অনুসন্ধান তথ্য দিন।", no_results:"আপনার অনুসন্ধানের সাথে মিলে এমন কোনো জমির রেকর্ড পাওয়া যায়নি।",
+    results_found:"টি রেকর্ড পাওয়া গেছে", view_profile:"ল্যান্ড প্রোফাইল দেখুন",
+    demo_data_notice:"এখানে প্রদর্শিত সকল তথ্য এই বিশ্ববিদ্যালয় প্রোটোটাইপের জন্য তৈরি নমুনা/ডেমো তথ্য।",
+    quick_actions:"দ্রুত কার্যক্রম", view_map:"মানচিত্র দেখুন", ownership_history:"মালিকানার ইতিহাস", pay_khajna:"খাজনা পরিশোধ",
+    view_tax:"কর দেখুন", view_documents:"দলিল দেখুন", view_mutation:"মিউটেশন দেখুন", report_problem:"সমস্যা জানান",
+    prepare_document:"দলিল তৈরি করুন", property_info:"সম্পত্তির তথ্য", land_area:"জমির পরিমাণ",
+    classification:"জমির শ্রেণি", survey_type:"জরিপের ধরন", current_owner:"বর্তমান মালিক",
+    dispute_status:"বিরোধের অবস্থা", no_dispute:"কোনো সক্রিয় বিরোধ নেই", active_dispute:"সক্রিয় বিরোধ",
+    case_ref:"মামলার রেফারেন্স", status:"অবস্থা", issue:"বিষয়",
+    ownership_history_title:"মালিকানার ইতিহাস", ownership_history_sub:"এই সম্পত্তির মালিকানার সময়ানুক্রমিক রেকর্ড।",
+    prev_owner:"মালিক", transaction:"লেনদেন", transfer_date:"বছর", reference:"রেফারেন্স",
+    mutation_ref:"মিউটেশন রেফারেন্স", notes:"নোট",
+    map_title:"ডিজিটাল ভূমি মানচিত্র", map_sub:"প্রদর্শনী মানচিত্র — নমুনা জিআইএস তথ্য (সরকারি কাডাস্ট্রাল তথ্য নয়)",
+    map_note:"এটি একটি প্রদর্শনী মৌজা মানচিত্র, যা এই বিশ্ববিদ্যালয় প্রোটোটাইপের জন্য নমুনা দাগ সীমানা দিয়ে তৈরি। এটি মন্ত্রণালয়ের সরকারি কাডাস্ট্রাল জিআইএস ডেটাবেসের প্রতিনিধিত্ব করে না।",
+    select_plot:"বিস্তারিত দেখতে একটি দাগ নির্বাচন করুন", plot_info:"দাগের তথ্য", sample_plot:"নমুনা দাগ (ডেমো)",
+    tax_title:"ভূমি উন্নয়ন কর / খাজনা", tax_sub:"ভূমি উন্নয়ন করের বিবরণ দেখতে একটি সম্পত্তি নির্বাচন করুন।",
+    select_property:"সম্পত্তি নির্বাচন করুন", holding_id:"হোল্ডিং / সম্পত্তি আইডি", tax_year:"কর বছর", previous_dues:"পূর্বের বকেয়া",
+    current_tax:"চলতি বছরের কর", late_fee:"বিলম্ব ফি", total_payable:"মোট প্রদেয়", payment_status:"পেমেন্ট অবস্থা",
+    pay_now:"এখনই পরিশোধ করুন", other_fees_title:"অন্যান্য ভূমি-সংক্রান্ত ফি", demo_amount:"ডেমো পরিমাণ",
+    fees_note:"প্রকৃত ফি প্রযোজ্য সরকারি নিয়মের উপর নির্ভর করে। এখানে দেখানো পরিমাণ শুধুমাত্র প্রদর্শনীর জন্য।",
+    payments_title:"পেমেন্ট", payments_sub:"একটি নিরাপদ, সিমুলেটেড পেমেন্ট প্রবাহ। কোনো প্রকৃত আর্থিক তথ্য সংগ্রহ করা হয় না।",
+    select_method:"১. পেমেন্ট পদ্ধতি নির্বাচন করুন", review_amount:"২. পরিমাণ পর্যালোচনা করুন", confirm_payment:"পেমেন্ট নিশ্চিত করুন",
+    processing:"আপনার ডেমো পেমেন্ট প্রক্রিয়াধীন...", payment_success:"পেমেন্ট সফলভাবে সম্পন্ন হয়েছে।",
+    transaction_id:"লেনদেন আইডি", amount:"পরিমাণ", date:"তারিখ", method:"পেমেন্ট পদ্ধতি",
+    download_receipt:"রসিদ ডাউনলোড / প্রিন্ট করুন", payment_history:"পেমেন্টের ইতিহাস", back:"পেছনে", next:"পরবর্তী",
+    demo_payment_label:"ডেমো পেমেন্ট — কোনো প্রকৃত অর্থ স্থানান্তর হয় না",
+    complaints_title:"অভিযোগ ও বিরোধ", complaints_sub:"আপনার জমির রেকর্ড সংক্রান্ত সমস্যা জানান।",
+    applicant_name:"আবেদনকারীর নাম", mobile_number:"মোবাইল নম্বর", property_optional:"সম্পত্তি (ঐচ্ছিক)",
+    complaint_category:"অভিযোগের ধরন", description:"বিবরণ", preferred_contact:"পছন্দের যোগাযোগ পদ্ধতি",
+    submit:"জমা দিন", submitted_ref:"আপনার অভিযোগ জমা হয়েছে। রেফারেন্স নম্বর:",
+    track_complaint:"অভিযোগ ট্র্যাক করুন", enter_complaint_ref:"অভিযোগ রেফারেন্স নম্বর লিখুন",
+    track_btn:"ট্র্যাক করুন", not_found:"এই রেফারেন্স নম্বরের জন্য কোনো রেকর্ড পাওয়া যায়নি।",
+    deed_title:"ডিজিটাল দলিল প্রস্তুতি", deed_sub:"একটি গাইডেড দলিল-প্রস্তুতি টুল। এটি আইনগতভাবে দলিল নিবন্ধন করে না।",
+    deed_disclaimer:"এই দলিলটি শুধুমাত্র প্রদর্শনীর জন্য একটি খসড়া/প্রস্তুতি টুল। এটি আইনগত নিবন্ধন, প্রমাণীকরণ বা মালিকানা হস্তান্তর গঠন করে না। প্রকৃত জমির দলিলের জন্য আইনগতভাবে প্রয়োজনীয় যাচাই, নিবন্ধন ও প্রমাণীকরণ প্রক্রিয়া অনুসরণ করতে হবে।",
+    seller:"বিক্রেতা", buyer:"ক্রেতা", land_details:"জমি", transaction_details:"লেনদেন", witnesses:"সাক্ষী", review:"পর্যালোচনা",
+    full_name:"পূর্ণ নাম", nid_placeholder:"এনআইডি নম্বর (ডেমো ফিল্ড)", address:"ঠিকানা", contact:"যোগাযোগ নম্বর",
+    sale_value:"বিক্রয়/হস্তান্তর মূল্য (৳)", transaction_type:"লেনদেনের ধরন", payment_info:"পেমেন্ট তথ্য",
+    witness1:"সাক্ষী ১ এর নাম", witness2:"সাক্ষী ২ এর নাম", generate_draft:"খসড়া তৈরি করুন", print:"প্রিন্ট", download:"ডাউনলোড",
+    documents_title:"দলিলপত্র", documents_sub:"অনুসন্ধান করা সম্পত্তির সাথে যুক্ত দলিল।",
+    track_app_title:"আবেদন ট্র্যাকিং", enter_app_id:"আবেদন আইডি লিখুন", app_not_found:"এই আইডি দিয়ে কোনো আবেদন পাওয়া যায়নি।",
+    notifications_title:"বিজ্ঞপ্তি", mark_read:"পঠিত হিসেবে চিহ্নিত করুন", mark_all_read:"সব পঠিত হিসেবে চিহ্নিত করুন", no_notifications:"কোনো বিজ্ঞপ্তি নেই।",
+    ai_title:"এআই ভূমি সহায়ক", ai_sub:"খাজনা, মিউটেশন, অভিযোগ, দলিল ইত্যাদি নিয়ে জিজ্ঞাসা করুন — ইংরেজি বা বাংলায়।",
+    ai_placeholder:"ইংরেজি বা বাংলায় আপনার প্রশ্ন লিখুন…", ai_send:"পাঠান", ai_demo_mode:"ডেমো সহায়ক মোড — কোনো লাইভ এআই সেবা সংযুক্ত নেই",
+    ai_intro:"হ্যালো! আমি এআই ভূমি সহায়ক (ডেমো মোড)। খাজনা, মিউটেশন, অভিযোগ বা জমির দলিল নিয়ে জিজ্ঞাসা করুন।",
+    ai_fallback:"এই বিষয়ে আমার কাছে এখনো নির্দিষ্ট ডেমো উত্তর নেই। সরকারি সহায়তার জন্য ভূমি মন্ত্রণালয়ের হটলাইনে কল করুন: ১৬১২২।",
+    ai_hotline_suffix:"সরকারি সহায়তার জন্য ভূমি মন্ত্রণালয়ের হটলাইনে কল করুন: 16122।",
+    help_title:"সাহায্য ও সহায়তা", about_title:"সিস্টেম সম্পর্কে",
+    citizen_dashboard:"নাগরিক ড্যাশবোর্ড", my_properties:"আমার সম্পত্তি", applications:"আবেদনসমূহ", due:"বকেয়া", paid:"পরিশোধিত",
+    admin_dashboard:"প্রশাসনিক / এমআইএস ড্যাশবোর্ড", total_properties:"মোট নিবন্ধিত সম্পত্তি", total_records:"মোট জমির রেকর্ড",
+    pending_mutations:"অমীমাংসিত মিউটেশন", resolved_complaints:"সমাধানকৃত অভিযোগ", active_disputes:"সক্রিয় বিরোধ",
+    tax_collected:"আদায়কৃত কর", outstanding_tax:"বকেয়া কর", applications_processed:"প্রক্রিয়াকৃত আবেদন",
+    apps_by_district:"জেলাভিত্তিক আবেদন", tax_trend:"কর আদায়ের প্রবণতা (গত ৬ মাস)",
+    mutation_status_chart:"মিউটেশন প্রক্রিয়াকরণ অবস্থা", complaint_categories_chart:"অভিযোগের ধরন",
+    records_by_class:"শ্রেণি অনুযায়ী জমির রেকর্ড", district_activity:"জেলাভিত্তিক কার্যক্রম",
+    login_title:"লগ ইন", citizen_login:"নাগরিক লগইন", officer_login:"কর্মকর্তা লগইন", password:"পাসওয়ার্ড",
+    username:"ইউজারনেম", demo_account:"ডেমো অ্যাকাউন্ট", use_demo:"এই ডেমো অ্যাকাউন্ট ব্যবহার করুন",
+    monitoring_title:"সিস্টেম মনিটরিং ড্যাশবোর্ড", monitoring_sub:"নমুনা/ডেমো স্ট্যাটাস তথ্য — এই প্রোটোটাইপে কোনো লাইভ মনিটরিং সেবা সংযুক্ত নেই।",
+    monitoring_uptime:"সিস্টেম আপটাইম (ডেমো)", monitoring_sessions:"সক্রিয় ডেমো সেশন", monitoring_api:"এপিআই স্ট্যাটাস", monitoring_db:"ডেটাবেস স্ট্যাটাস",
+    monitoring_api_val:"সিমুলেটেড — ঠিক আছে", monitoring_db_val:"সিমুলেটেড — ঠিক আছে",
+    footer_notice:"এই ওয়েবসাইটটি একটি বিশ্ববিদ্যালয় প্রকল্প প্রোটোটাইপ যা একটি প্রস্তাবিত ডিজিটাল ভূমি ব্যবস্থাপনা তথ্য সিস্টেম প্রদর্শন করে। এটি ভূমি মন্ত্রণালয়ের কোনো সরকারি সেবা পোর্টাল নয়।",
+    footer_about:"সম্পর্কে", footer_services:"সেবাসমূহ", footer_privacy:"গোপনীয়তা", footer_accessibility:"প্রবেশযোগ্যতা", footer_contact:"যোগাযোগ",
+    home_search_field_note:"অন্তত একটি তথ্য দিন — যেমন জেলা + মৌজা + খতিয়ান।",
+    view_all:"সব দেখুন", back_home:"হোমে ফিরুন", stage:"ধাপ", filter_by_district:"জেলা অনুযায়ী ফিল্টার", all_districts:"সকল জেলা",
+    success:"সফল", error:"ত্রুটি",
+  }
+};
+function t(key){
+  const d = I18N[STATE.lang] || I18N.en;
+  return d[key] !== undefined ? d[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+}
+
+</script>
+<script>
+"use strict";
+/* ===================== STATE ===================== */
+const STATE = {
+  lang: "en",
+  route: "home",
+  params: {},
+  user: null, // {type:'citizen'|'officer', name}
+  searchResults: null,
+  searchError: null,
+  lastSearchDone: false,
+  selectedPlotDag: null,
+  taxSelectedProp: "PROP-001",
+  paymentFlow: null,
+  complaintSubmittedRef: null,
+  complaintTrackResult: undefined,
+  deedForm: { step: 1, data: {} },
+  deedGenerated: false,
+  appTrackResult: undefined,
+  chatMessages: [],
+  adminDistrictFilter: "all",
+  prefillPropertyId: null,
+  toastSeq: 1
+};
+
+/* ===================== HELPERS ===================== */
+function findProperty(id){ return PROPERTIES.find(p=>p.id===id); }
+function fmtMoney(n){ return "৳ " + Number(n).toLocaleString("en-US"); }
+function esc(s){ return (s===undefined||s===null) ? "" : String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toast(msg, type){
+  const root = document.getElementById("toast-root");
+  const div = document.createElement("div");
+  div.className = "toast" + (type ? " " + type : "");
+  div.textContent = msg;
+  root.appendChild(div);
+  setTimeout(()=>{ div.style.opacity="0"; div.style.transition="opacity .3s"; setTimeout(()=>div.remove(),300); }, 3200);
+}
+function genRef(prefix){
+  const n = Math.floor(1000 + Math.random()*8999);
+  return prefix + "-2026-" + (100000+Math.floor(Math.random()*899999));
+}
+function genTxnId(){
+  return "LDT-2026-" + (100000+Math.floor(Math.random()*899999));
+}
+function taxFor(prop){
+  // deterministic-looking demo tax based on property id so it's consistent across views
+  const seed = prop.id.charCodeAt(prop.id.length-1) + prop.id.length;
+  const current = 900 + (seed*137)%2600;
+  const dues = prop.taxStatus === "Due" ? 400 + (seed*53)%900 : 0;
+  const late = dues > 0 ? Math.round(dues*0.08) : 0;
+  return { current, dues, late, total: current+dues+late };
+}
+function scrollTop(){ window.scrollTo({top:0,behavior:"instant"}); }
+
+/* ===================== ROUTER ===================== */
+function nav(route, params){
+  STATE.route = route;
+  STATE.params = params || {};
+  const hash = "#/" + route + (params && params.id ? "/" + params.id : "");
+  if (location.hash !== hash) location.hash = hash; else render();
+  scrollTop();
+}
+window.addEventListener("hashchange", ()=>{
+  const parts = location.hash.replace(/^#\//,"").split("/");
+  STATE.route = parts[0] || "home";
+  STATE.params = parts[1] ? { id: decodeURIComponent(parts[1]) } : {};
+  render();
+});
+
+/* ===================== ACTIONS (exposed globally) ===================== */
+const Actions = {
+  setLang(lang){ STATE.lang = lang; document.body.className = lang==="bn" ? "lang-bn" : ""; render(); },
+
+  doSearch(){
+    const f = {
+      district: document.getElementById("f-district").value.trim(),
+      upazila: document.getElementById("f-upazila").value.trim(),
+      mouza: document.getElementById("f-mouza").value.trim(),
+      khatian: document.getElementById("f-khatian").value.trim(),
+      dag: document.getElementById("f-dag").value.trim(),
+      owner: document.getElementById("f-owner").value.trim()
+    };
+    const anyFilled = Object.values(f).some(v=>v);
+    if (!anyFilled){ STATE.searchError = t("no_criteria"); STATE.searchResults=null; render(); return; }
+    STATE.searchError = null;
+    const results = PROPERTIES.filter(p=>{
+      return (!f.district || p.district.toLowerCase().includes(f.district.toLowerCase()))
+        && (!f.upazila || p.upazila.toLowerCase().includes(f.upazila.toLowerCase()))
+        && (!f.mouza || p.mouza.toLowerCase().includes(f.mouza.toLowerCase()))
+        && (!f.khatian || p.khatian.toLowerCase().includes(f.khatian.toLowerCase()))
+        && (!f.dag || p.dag === f.dag)
+        && (!f.owner || p.owner.toLowerCase().includes(f.owner.toLowerCase()));
+    });
+    STATE.searchResults = results;
+    STATE.lastSearchDone = true;
+    nav("search-results");
+  },
+
+  quickSearchExample(){
+    nav("search-results");
+    STATE.searchResults = [findProperty("PROP-001")];
+    STATE.lastSearchDone = true;
+    render();
+  },
+
+  openProperty(id){ STATE.selectedPlotDag=null; nav("property", {id}); },
+
+  goMapForProperty(id){ STATE.highlightPropId = id; nav("landmap"); },
+
+  selectPlot(dag){ STATE.selectedPlotDag = dag; render(); },
+
+  goTaxForProperty(id){ STATE.taxSelectedProp = id; nav("tax"); },
+  setTaxProp(id){ STATE.taxSelectedProp = id; render(); },
+
+  startPayment(category, propId, amount){
+    STATE.paymentFlow = { step:1, category, propId, amount, method:null, txn:null };
+    nav("payments");
+  },
+  pickMethod(m){ STATE.paymentFlow.method = m; render(); },
+  paymentToStep2(){
+    if(!STATE.paymentFlow.method){ toast(t("error")+": select a payment method", "error"); return; }
+    STATE.paymentFlow.step = 2; render();
+  },
+  paymentBack(){ STATE.paymentFlow.step = Math.max(1, STATE.paymentFlow.step-1); render(); },
+  confirmPayment(){
+    STATE.paymentFlow.step = 3; render();
+    setTimeout(()=>{
+      const txn = { txnId: genTxnId(), propId: STATE.paymentFlow.propId, type: STATE.paymentFlow.category,
+        amount: STATE.paymentFlow.amount, method: STATE.paymentFlow.method + " — Demo",
+        date: "25 August 2026", status: "Paid" };
+      PAYMENTS.unshift(txn);
+      STATE.paymentFlow.txn = txn;
+      STATE.paymentFlow.step = 4;
+      NOTIFICATIONS.unshift({id:Date.now(), en:`Payment successful — Transaction ${txn.txnId}.`, bn:`পেমেন্ট সফল হয়েছে — লেনদেন ${txn.txnId}।`, read:false});
+      toast(t("payment_success"), "success");
+      render();
+    }, 1100);
+  },
+  newPayment(){ STATE.paymentFlow = null; render(); },
+
+  updateComplaintField(){ /* no-op, read at submit */ },
+  submitComplaint(){
+    const name = document.getElementById("c-name").value.trim();
+    const mobile = document.getElementById("c-mobile").value.trim();
+    const category = document.getElementById("c-category").value;
+    const desc = document.getElementById("c-desc").value.trim();
+    const propId = document.getElementById("c-property").value;
+    const contact = document.getElementById("c-contact").value;
+    if (!name || !mobile || !category || !desc){
+      toast(t("error")+": "+ (STATE.lang==="bn"?"সব প্রয়োজনীয় ঘর পূরণ করুন":"please fill all required fields"), "error");
+      return;
+    }
+    const ref = genRef("CMP");
+    COMPLAINTS.unshift({ id: ref, propId: propId||null, category, name, mobile, description: desc,
+      status: 0, submitted: "2026-08-25", stages: ["Submitted","Under Review","Investigation","Resolved"], contact });
+    STATE.complaintSubmittedRef = ref;
+    render();
+  },
+  resetComplaintForm(){ STATE.complaintSubmittedRef = null; STATE.prefillPropertyId=null; render(); },
+  trackComplaint(){
+    const ref = document.getElementById("track-ref").value.trim().toUpperCase();
+    STATE.complaintTrackResult = COMPLAINTS.find(c=>c.id.toUpperCase()===ref) || null;
+    render();
+  },
+
+  deedGoto(step){
+    // persist current step fields before moving
+    Actions.persistDeedStep();
+    STATE.deedForm.step = step; render();
+  },
+  persistDeedStep(){
+    const ids = document.querySelectorAll("[data-deed-field]");
+    ids.forEach(inp=>{ STATE.deedForm.data[inp.dataset.deedField] = inp.value; });
+  },
+  deedNext(){
+    Actions.persistDeedStep();
+    STATE.deedForm.step = Math.min(7, STATE.deedForm.step+1);
+    render();
+  },
+  deedBack(){
+    Actions.persistDeedStep();
+    STATE.deedForm.step = Math.max(1, STATE.deedForm.step-1);
+    render();
+  },
+  deedGenerate(){
+    Actions.persistDeedStep();
+    STATE.deedGenerated = true;
+    STATE.deedForm.step = 7;
+    render();
+  },
+  deedRestart(){ STATE.deedForm = {step:1, data:{}}; STATE.deedGenerated=false; render(); },
+  deedDownload(){
+    const d = STATE.deedForm.data;
+    const content = `DEMO LAND DOCUMENT DRAFT (NOT A LEGAL DOCUMENT)\n============================================\n\nSELLER: ${d.sellerName||""}\nNID (demo): ${d.sellerNid||""}\nAddress: ${d.sellerAddress||""}\nContact: ${d.sellerContact||""}\n\nBUYER: ${d.buyerName||""}\nNID (demo): ${d.buyerNid||""}\nAddress: ${d.buyerAddress||""}\nContact: ${d.buyerContact||""}\n\nLAND: District ${d.landDistrict||""}, Upazila ${d.landUpazila||""}, Mouza ${d.landMouza||""}\nKhatian: ${d.landKhatian||""}  Dag: ${d.landDag||""}  Area: ${d.landArea||""}  Classification: ${d.landClass||""}\n\nTRANSACTION: Value ৳ ${d.saleValue||""}  Type: ${d.transType||""}\nPayment info: ${d.paymentInfo||""}\n\nWITNESS 1: ${d.witness1||""}\nWITNESS 2: ${d.witness2||""}\n\n---\nThis document is a draft/preparation tool for demonstration purposes. It does not constitute legal registration, authentication, or transfer of ownership. Actual land documents must follow the legally required verification, registration, and authentication procedures.\n\nGenerated by NLIVS Prototype — Ministry of Land Bangladesh (University Project)\n`;
+    const blob = new Blob([content], {type:"text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "demo-land-document-draft.txt"; a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  trackApplication(){
+    const id = document.getElementById("app-id").value.trim().toUpperCase();
+    STATE.appTrackResult = APPLICATIONS.find(a=>a.id.toUpperCase()===id) || null;
+    render();
+  },
+  openAppTrackFor(id){ STATE.prefillAppId = id; nav("apptrack"); },
+
+  markNotifRead(id){ const n = NOTIFICATIONS.find(x=>x.id===id); if(n) n.read=true; render(); },
+  markAllRead(){ NOTIFICATIONS.forEach(n=>n.read=true); render(); },
+
+  sendChat(){
+    const inputEl = document.getElementById("chat-input");
+    const text = inputEl.value.trim();
+    if (!text) return;
+    STATE.chatMessages.push({role:"user", text});
+    STATE.chatMessages.push({role:"bot", text: answerAI(text)});
+    inputEl.value = "";
+    render();
+    setTimeout(()=>{ const w=document.getElementById("chat-window"); if(w) w.scrollTop = w.scrollHeight; },0);
+  },
+  chatChip(q){
+    document.getElementById("chat-input").value = q;
+    Actions.sendChat();
+  },
+
+  loginCitizenDemo(){
+    STATE.user = { type:"citizen", name: DEMO_USERS.citizen.name, mobile: DEMO_USERS.citizen.mobile };
+    toast(t("success")+": logged in as demo citizen", "success");
+    nav("dashboard-citizen");
+  },
+  loginOfficerDemo(){
+    STATE.user = { type:"officer", name: DEMO_USERS.officer.name };
+    toast(t("success")+": logged in as demo officer", "success");
+    nav("dashboard-admin");
+  },
+  logout(){ STATE.user = null; toast(STATE.lang==="bn"?"লগ আউট হয়েছে":"Logged out"); nav("home"); },
+
+  setAdminFilter(d){ STATE.adminDistrictFilter = d; render(); },
+
+  goDeedFor(id){
+    const p = findProperty(id);
+    STATE.deedForm = {step:1, data: p ? {
+      landDistrict:p.district, landUpazila:p.upazila, landMouza:p.mouza, landKhatian:p.khatian,
+      landDag:p.dag, landArea:p.area, landClass:p.classification
+    } : {}};
+    STATE.deedGenerated = false;
+    nav("deed");
+  },
+  goComplaintFor(id){ STATE.prefillPropertyId = id; STATE.complaintSubmittedRef=null; nav("complaints"); }
+};
+window.Actions = Actions;
+
+/* ===================== AI ANSWER ENGINE ===================== */
+function isBangla(text){ return /[\u0980-\u09FF]/.test(text); }
+function answerAI(text){
+  const bangla = isBangla(text);
+  const lower = text.toLowerCase();
+  let best = null;
+  for (const item of AI_KB){
+    const list = bangla ? item.kw_bn : item.kw_en;
+    for (const kw of list){
+      if (bangla ? text.includes(kw) : lower.includes(kw)){ best = item; break; }
+    }
+    if (best) break;
+  }
+  if (best) return bangla ? best.bn : best.en;
+  return bangla ? (I18N.bn.ai_fallback) : (I18N.en.ai_fallback);
+}
+
+/* ===================== LAYOUT ===================== */
+function renderHeader(){
+  const navItems = [
+    ["home","nav_home"], ["search","nav_search"], ["landmap","nav_map"], ["services","nav_services"],
+    ["payments","nav_payments"], ["complaints","nav_complaints"], ["documents","nav_documents"],
+    ["apptrack","nav_track"], ["deed","nav_deed"], ["ai","nav_ai"], ["help","nav_help"]
+  ];
+  return `
+  <div class="topbar">
+    <div class="container">
+      <div class="topbar-left">
+        <a class="helpline" href="tel:16122">☎ ${t("helpline")}: 16122</a>
+        <button class="link" onclick="nav('help')">${t("accessibility")}</button>
+      </div>
+      <div class="topbar-right">
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button class="${STATE.lang==='en'?'active':''}" onclick="Actions.setLang('en')">English</button>
+          <button class="${STATE.lang==='bn'?'active':''}" onclick="Actions.setLang('bn')">বাংলা</button>
+        </div>
+        ${STATE.user ? `
+          <button class="link" onclick="nav('${STATE.user.type==='citizen'?'dashboard-citizen':'dashboard-admin'}')">👤 ${esc(STATE.user.name)}</button>
+          <button class="link" onclick="Actions.logout()">${t("logout")}</button>
+        ` : `<button class="link" onclick="nav('login')">${t("login")}</button>`}
+      </div>
+    </div>
+  </div>
+  <header class="site-header">
+    <div class="container header-row">
+      <button class="brand" onclick="nav('home')">
+        <span class="emblem">ভূ</span>
+        <span class="brand-text">
+          <div class="title-en">${t("ministry")}</div>
+          <div class="title-bn">${t("govt")}</div>
+        </span>
+      </button>
+      <div class="spacer"></div>
+      <div class="quick-actions no-print">
+        <button class="btn small secondary" onclick="nav('notifications')">🔔 ${t("nav_notifications")}${NOTIFICATIONS.filter(n=>!n.read).length? ' ('+NOTIFICATIONS.filter(n=>!n.read).length+')':''}</button>
+        <button class="btn small" onclick="nav('search')">🔎 ${t("nav_search")}</button>
+      </div>
+    </div>
+    <nav class="navbar no-print" aria-label="Main navigation">
+      <div class="container">
+        ${navItems.map(([r,k])=>`<button class="${STATE.route===r?'active':''}" onclick="nav('${r}')">${t(k)}</button>`).join("")}
+      </div>
+    </nav>
+  </header>`;
+}
+
+function renderFooter(){
+  return `
+  <footer class="site-footer no-print">
+    <div class="container grid cols-4">
+      <div>
+        <h5>${t("ministry")}</h5>
+        <p style="font-size:12.5px;color:#b9d4c4">${t("govt")}</p>
+      </div>
+      <div>
+        <h5>${t("footer_services")}</h5>
+        <ul>
+          <li><a href="#" onclick="nav('search');return false;">${t("nav_search")}</a></li>
+          <li><a href="#" onclick="nav('tax');return false;">${t("tax_title")}</a></li>
+          <li><a href="#" onclick="nav('payments');return false;">${t("nav_payments")}</a></li>
+          <li><a href="#" onclick="nav('complaints');return false;">${t("nav_complaints")}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>${t("footer_about")}</h5>
+        <ul>
+          <li><a href="#" onclick="nav('about');return false;">${t("about_title")}</a></li>
+          <li><a href="#" onclick="nav('help');return false;">${t("footer_privacy")}</a></li>
+          <li><a href="#" onclick="nav('help');return false;">${t("footer_accessibility")}</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>${t("footer_contact")}</h5>
+        <div class="helpline-big">16122</div>
+        <p style="font-size:12.5px">${t("help")}: <a href="#" onclick="nav('help');return false;">${t("help_title")}</a></p>
+      </div>
+    </div>
+    <div class="container footer-notice">${t("footer_notice")}</div>
+  </footer>`;
+}
+
+function pageHead(title, sub){
+  return `<div class="section-head"><h2>${title}</h2>${sub?`<p>${sub}</p>`:""}</div>`;
+}
+
+/* ===================== MAIN RENDER ===================== */
+function render(){
+  document.body.className = STATE.lang==="bn" ? "lang-bn" : "";
+  const view = VIEWS[STATE.route] || VIEWS.home;
+  document.getElementById("app").innerHTML = renderHeader() + `<main id="main-content">` + view() + `</main>` + renderFooter();
+  window.scrollTo({top:0});
+  POST_RENDER[STATE.route] && POST_RENDER[STATE.route]();
+}
+const POST_RENDER = {};
+
+/* ===================== VIEWS ===================== */
+const VIEWS = {};
+
+VIEWS.home = function(){
+  return `
+  <section class="hero">
+    <div class="container">
+      <span class="hero-eyebrow">${t("hero_eyebrow")}</span>
+      <h1>${t("hero_title")}</h1>
+      <p class="lead">${t("hero_lead")}</p>
+      <div class="search-card">
+        <h3>🔎 ${t("search_title")}</h3>
+        <div class="hint">${t("search_hint")}</div>
+        ${searchFormHTML()}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      ${pageHead(STATE.lang==='bn'?"সেবাসমূহ":"Explore the System", STATE.lang==='bn'?"একটি সংযুক্ত ভূমি তথ্য ব্যবস্থার প্রতিটি অংশ পরীক্ষা করুন":"Every part of a connected land information system, ready to try.")}
+      <div class="grid cols-4">
+        ${featureCard("🗺️","nav_map","Explore a demonstration cadastral map","landmap")}
+        ${featureCard("🧾","tax_title","Check Land Development Tax (Khajna)","tax")}
+        ${featureCard("💳","nav_payments","Simulated bKash, Rocket, Nagad, card & bank payments","payments")}
+        ${featureCard("⚖️","nav_complaints","Report and track land-related disputes","complaints")}
+        ${featureCard("📄","deed_title","Prepare a guided draft land document","deed")}
+        ${featureCard("📁","documents_title","View documents linked to a property","documents")}
+        ${featureCard("📍","nav_track","Track a mutation (namjari) application","apptrack")}
+        ${featureCard("🤖","ai_title","Ask the bilingual AI Land Assistant","ai")}
+      </div>
+    </div>
+  </section>
+
+  <section class="section tight" style="background:var(--green-100)">
+    <div class="container">
+      ${pageHead(STATE.lang==='bn'?"নমুনা সম্পত্তি ব্রাউজ করুন":"Or browse demo properties", t("demo_data_notice"))}
+      <div class="grid cols-3">
+        ${PROPERTIES.map(propertyCard).join("")}
+      </div>
+    </div>
+  </section>`;
+};
+
+function featureCard(icon, titleKey, descEn, route){
+  return `<button class="feature-card" onclick="nav('${route}')">
+    <div class="icon">${icon}</div>
+    <h4>${t(titleKey)}</h4>
+    <p>${STATE.lang==='bn' ? '' : descEn}</p>
+  </button>`;
+}
+
+function searchFormHTML(){
+  return `
+    <div class="search-grid">
+      <div class="field"><label>${t("district")}</label><input id="f-district" placeholder="Dhaka"></div>
+      <div class="field"><label>${t("upazila")}</label><input id="f-upazila" placeholder="Savar"></div>
+      <div class="field"><label>${t("mouza")}</label><input id="f-mouza" placeholder="Amin Bazar"></div>
+      <div class="field"><label>${t("khatian")}</label><input id="f-khatian" placeholder="CS-4587"></div>
+      <div class="field"><label>${t("dag")}</label><input id="f-dag" placeholder="1024"></div>
+      <div class="field"><label>${t("owner")}</label><input id="f-owner" placeholder="Md. Rahim Uddin"></div>
+    </div>
+    <div class="search-actions">
+      <span class="helper-note">${t("home_search_field_note")}</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn secondary" onclick="document.querySelectorAll('#f-district,#f-upazila,#f-mouza,#f-khatian,#f-dag,#f-owner').forEach(i=>i.value='')">${t("clear")}</button>
+        <button class="btn" onclick="Actions.doSearch()">${t("search_btn")}</button>
+      </div>
+    </div>
+    ${STATE.searchError ? `<div class="error-text">⚠ ${STATE.searchError}</div>` : ""}
+  `;
+}
+
+function propertyCard(p){
+  return `<div class="card">
+    <span class="tag demo">DEMO</span>
+    <h4 style="margin:8px 0 4px">${p.mouza}, ${p.upazila}</h4>
+    <p style="font-size:13px;color:var(--ink-500);margin:0 0 10px">${p.district} · Khatian ${p.khatian} · Dag ${p.dag}</p>
+    <div class="kv" style="grid-template-columns:110px 1fr;font-size:13px">
+      <div class="k">${t("owner")}</div><div class="v">${p.owner}</div>
+      <div class="k">${t("land_area")}</div><div class="v">${p.area}</div>
+    </div>
+    <div style="margin-top:12px"><button class="btn small block" onclick="Actions.openProperty('${p.id}')">${t("view_profile")} →</button></div>
+  </div>`;
+}
+
+VIEWS.search = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("search_title"), t("search_hint"))}
+    <div class="card" style="max-width:900px">${searchFormHTML()}</div>
+  </div></section>`;
+};
+
+VIEWS["search-results"] = function(){
+  const results = STATE.searchResults || [];
+  return `<section class="section"><div class="container">
+    ${pageHead(t("search_title"))}
+    <div class="card" style="max-width:900px;margin-bottom:24px">${searchFormHTML()}</div>
+    ${results.length ? `
+      <p><strong>${results.length}</strong> ${t("results_found")}</p>
+      <div class="grid cols-3">${results.map(propertyCard).join("")}</div>
+    ` : `<div class="empty-state"><div class="icon">🗂️</div><p>${t("no_results")}</p></div>`}
+  </div></section>`;
+};
+
+/* ===================== PROPERTY / LAND PROFILE ===================== */
+VIEWS.property = function(){
+  const p = findProperty(STATE.params.id);
+  if (!p) return `<section class="section"><div class="container empty-state"><div class="icon">❓</div><p>${t("no_results")}</p><button class="btn" onclick="nav('search')">${t("nav_search")}</button></div></section>`;
+  const app = APPLICATIONS.find(a=>a.propId===p.id);
+  return `<section class="section"><div class="container">
+    <span class="tag demo">DEMO RECORD</span>
+    ${pageHead(p.mouza + ", " + p.upazila + ", " + p.district, "Khatian " + p.khatian + " · Dag " + p.dag)}
+
+    <div class="grid cols-2" style="align-items:start">
+      <div class="card">
+        <h3 style="margin-top:0">${t("property_info")}</h3>
+        <div class="kv">
+          <div class="k">${t("district")}</div><div class="v">${p.district}</div>
+          <div class="k">${t("upazila")}</div><div class="v">${p.upazila}</div>
+          <div class="k">${t("mouza")}</div><div class="v">${p.mouza}</div>
+          <div class="k">Village</div><div class="v">${p.village}</div>
+          <div class="k">${t("khatian")}</div><div class="v">${p.khatian}</div>
+          <div class="k">${t("dag")}</div><div class="v">${p.dag}</div>
+          <div class="k">${t("land_area")}</div><div class="v">${p.area}</div>
+          <div class="k">${t("classification")}</div><div class="v">${p.classification}</div>
+          <div class="k">${t("survey_type")}</div><div class="v">${p.surveyType}</div>
+          <div class="k">${t("current_owner")}</div><div class="v">${p.owner}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">${t("dispute_status")}</h3>
+        ${p.dispute ? `
+          <span class="tag red">${t("active_dispute")}</span>
+          <div class="kv" style="margin-top:10px">
+            <div class="k">${t("case_ref")}</div><div class="v">${p.dispute.ref}</div>
+            <div class="k">${t("status")}</div><div class="v">${p.dispute.status}</div>
+            <div class="k">${t("issue")}</div><div class="v">${p.dispute.issue}</div>
+          </div>
+        ` : `<span class="tag green">${t("no_dispute")}</span>`}
+        <div class="divider"></div>
+        <h3 style="margin:0 0 4px">${t("payment_status")}</h3>
+        <span class="tag ${p.taxStatus==='Paid'?'green':'red'}">${p.taxStatus==='Paid' ? t("paid") : t("due")}</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">${t("quick_actions")}</h3>
+      <div class="quick-actions">
+        <button class="btn small secondary" onclick="Actions.goMapForProperty('${p.id}')">🗺️ ${t("view_map")}</button>
+        <button class="btn small secondary" onclick="document.getElementById('history-anchor').scrollIntoView({behavior:'smooth'})">🕒 ${t("ownership_history")}</button>
+        <button class="btn small secondary" onclick="Actions.goTaxForProperty('${p.id}')">🧾 ${t("pay_khajna")}</button>
+        <button class="btn small secondary" onclick="Actions.goTaxForProperty('${p.id}')">📊 ${t("view_tax")}</button>
+        <button class="btn small secondary" onclick="document.getElementById('docs-anchor').scrollIntoView({behavior:'smooth'})">📁 ${t("view_documents")}</button>
+        <button class="btn small secondary" onclick="${app ? `Actions.openAppTrackFor('${app.id}')` : `nav('apptrack')`}">🔁 ${t("view_mutation")}</button>
+        <button class="btn small secondary" onclick="Actions.goComplaintFor('${p.id}')">⚠️ ${t("report_problem")}</button>
+        <button class="btn small secondary" onclick="Actions.goDeedFor('${p.id}')">📝 ${t("prepare_document")}</button>
+      </div>
+    </div>
+
+    <div id="history-anchor" class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">${t("ownership_history_title")}</h3>
+      <p style="color:var(--ink-500);font-size:13.5px;margin-top:-6px">${t("ownership_history_sub")}</p>
+      <div class="timeline" style="margin-top:18px">
+        ${p.ownershipHistory.map((h,i)=>`
+          <div class="tl-item ${i===p.ownershipHistory.length-1?'current':'done'}">
+            <h5>${h.year} — ${h.owner}</h5>
+            <div class="meta">${h.type}</div>
+            <div class="kv" style="margin-top:6px;grid-template-columns:140px 1fr">
+              <div class="k">${t("reference")}</div><div class="v">${h.ref}</div>
+              <div class="k">${t("mutation_ref")}</div><div class="v">${h.mutationRef}</div>
+              <div class="k">${t("notes")}</div><div class="v" style="font-weight:400">${h.notes}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div id="docs-anchor" class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">${t("documents_title")}</h3>
+      <table class="data"><thead><tr><th>${STATE.lang==='bn'?'দলিলের নাম':'Document'}</th><th>${STATE.lang==='bn'?'ধরন':'Type'}</th><th></th></tr></thead>
+      <tbody>${p.documents.map(d=>`<tr><td>${d.name}</td><td>${d.type}</td><td><button class="btn small secondary" onclick="toast('${STATE.lang==='bn'?'ডেমো: নমুনা দলিল ডাউনলোড হচ্ছে':'Demo: sample document downloading'}')">⬇ ${t("download")}</button></td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== SERVICES HUB ===================== */
+VIEWS.services = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("nav_services"))}
+    <div class="grid cols-3">
+      ${featureCard("🧾","tax_title","Land Development Tax / Khajna","tax")}
+      ${featureCard("🔁","nav_track","Mutation (Namjari) application tracking","apptrack")}
+      ${featureCard("📝","deed_title","Digital Deed Preparation","deed")}
+      ${featureCard("💳","nav_payments","Payments & receipts","payments")}
+      ${featureCard("⚖️","nav_complaints","Complaints & disputes","complaints")}
+      ${featureCard("📁","documents_title","Documents","documents")}
+      ${featureCard("🗺️","nav_map","Digital Land Map","landmap")}
+      ${featureCard("🤖","ai_title","AI Land Assistant","ai")}
+    </div>
+  </div></section>`;
+};
+
+/* ===================== DIGITAL LAND MAP ===================== */
+VIEWS.landmap = function(){
+  const plot = DEMO_MOUZA_PLOTS.find(pl=>pl.dag===STATE.selectedPlotDag);
+  return `<section class="section"><div class="container">
+    <span class="tag demo">${t("map_sub")}</span>
+    ${pageHead(t("map_title"))}
+    <div class="helper-note" style="margin-bottom:16px">${t("map_note")}</div>
+
+    <div class="grid cols-2" style="align-items:start;margin-bottom:22px">
+      <div>
+        <h3 style="margin:0 0 10px">${STATE.lang==='bn'?'জাতীয় দৃশ্য — নিবন্ধিত নমুনা সম্পত্তি':'National view — registered demo properties'}</h3>
+        <div id="leafmap"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">${STATE.lang==='bn'?'প্রদর্শনী মৌজা মানচিত্র — আমিন বাজার, সাভার, ঢাকা':'Demonstration Mouza Map — Amin Bazar, Savar, Dhaka'}</h3>
+        <p style="font-size:13px;color:var(--ink-500)">${t("select_plot")}. Mouza → Map → Dag/Plot → Khatian → Owner → Land Area.</p>
+        <div class="plot-grid">
+          ${DEMO_MOUZA_PLOTS.map(pl=>`
+            <button class="plot ${STATE.selectedPlotDag===pl.dag?'selected':''}" onclick="Actions.selectPlot('${pl.dag}')">
+              <div class="dag">${pl.dag}</div>
+              <div>${t("dag")}</div>
+            </button>`).join("")}
+        </div>
+        ${plot ? `
+          <div class="divider"></div>
+          <h4 style="margin:0 0 8px">${t("plot_info")} ${!plot.real?`<span class="tag demo">${t("sample_plot")}</span>`:""}</h4>
+          <div class="kv">
+            <div class="k">${t("dag")}</div><div class="v">${plot.dag}</div>
+            <div class="k">${t("khatian")}</div><div class="v">${plot.khatian}</div>
+            <div class="k">${t("owner")}</div><div class="v">${plot.owner}</div>
+            <div class="k">${t("land_area")}</div><div class="v">${plot.area}</div>
+            <div class="k">${t("classification")}</div><div class="v">${plot.classification}</div>
+            <div class="k">${t("payment_status")}</div><div class="v"><span class="tag ${plot.taxStatus==='Paid'?'green':'red'}">${plot.taxStatus}</span></div>
+          </div>
+          ${plot.real ? `<button class="btn small" style="margin-top:12px" onclick="Actions.openProperty('${plot.propId}')">${t("view_profile")} →</button>` : ""}
+        ` : ""}
+      </div>
+    </div>
+  </div></section>`;
+};
+POST_RENDER.landmap = function(){
+  const el = document.getElementById("leafmap");
+  if (!el || typeof L === "undefined") return;
+  const map = L.map(el).setView([23.8, 90.4], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+  }).addTo(map);
+  PROPERTIES.forEach(p=>{
+    const marker = L.circleMarker(p.latlng, {
+      radius: 9, color: p.id===STATE.highlightPropId ? "#a97b1f" : "#0b5e40",
+      weight: 3, fillColor: p.id===STATE.highlightPropId ? "#f6ecd6" : "#e5f2ea", fillOpacity: .9
+    }).addTo(map);
+    marker.bindPopup(`<strong>${p.mouza}, ${p.upazila}</strong><br>${p.district}<br>Khatian ${p.khatian} · Dag ${p.dag}<br>Owner: ${p.owner}<br><a href="#/property/${p.id}">Open Land Profile →</a>`);
+    if (p.id===STATE.highlightPropId) marker.openPopup();
+  });
+  setTimeout(()=>map.invalidateSize(), 150);
+};
+
+/* ===================== TAX / KHAJNA ===================== */
+VIEWS.tax = function(){
+  const p = findProperty(STATE.taxSelectedProp) || PROPERTIES[0];
+  const tax = taxFor(p);
+  return `<section class="section"><div class="container">
+    ${pageHead(t("tax_title"), t("tax_sub"))}
+    <div class="card" style="max-width:760px">
+      <div class="field" style="margin-bottom:16px">
+        <label>${t("select_property")}</label>
+        <select onchange="Actions.setTaxProp(this.value)">
+          ${PROPERTIES.map(pp=>`<option value="${pp.id}" ${pp.id===p.id?'selected':''}>${pp.mouza}, ${pp.upazila} — Khatian ${pp.khatian}</option>`).join("")}
+        </select>
+      </div>
+      <div class="kv">
+        <div class="k">${t("holding_id")}</div><div class="v">${p.id}</div>
+        <div class="k">${t("owner")}</div><div class="v">${p.owner}</div>
+        <div class="k">${t("tax_year")}</div><div class="v">2026</div>
+        <div class="k">${t("previous_dues")}</div><div class="v">${fmtMoney(tax.dues)}</div>
+        <div class="k">${t("current_tax")}</div><div class="v">${fmtMoney(tax.current)}</div>
+        <div class="k">${t("late_fee")}</div><div class="v">${fmtMoney(tax.late)}</div>
+        <div class="k" style="font-weight:700">${t("total_payable")}</div><div class="v" style="font-weight:800;color:var(--green-800)">${fmtMoney(tax.total)}</div>
+        <div class="k">${t("payment_status")}</div><div class="v"><span class="tag ${p.taxStatus==='Paid'?'green':'red'}">${p.taxStatus==='Paid'?t("paid"):t("due")}</span></div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn block" onclick="Actions.startPayment('Land Development Tax / Khajna','${p.id}',${tax.total})">${t("pay_now")}</button>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:760px;margin-top:18px">
+      <h3 style="margin-top:0">${t("other_fees_title")}</h3>
+      <p class="helper-note">${t("fees_note")}</p>
+      <table class="data">
+        <thead><tr><th>${STATE.lang==='bn'?'সেবা':'Service'}</th><th>${t("demo_amount")}</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>${STATE.lang==='bn'?'মিউটেশন সংক্রান্ত ফি':'Mutation-related fee'}</td><td>${fmtMoney(1150)}</td><td><button class="btn small secondary" onclick="Actions.startPayment('Mutation Fee','${p.id}',1150)">${t("pay_now")}</button></td></tr>
+          <tr><td>${STATE.lang==='bn'?'সত্যায়িত কপি ফি':'Certified copy / document fee'}</td><td>${fmtMoney(300)}</td><td><button class="btn small secondary" onclick="Actions.startPayment('Certified Copy Fee','${p.id}',300)">${t("pay_now")}</button></td></tr>
+          <tr><td>${STATE.lang==='bn'?'অন্যান্য সেবা ফি':'Other applicable land-service fee'}</td><td>${fmtMoney(500)}</td><td><button class="btn small secondary" onclick="Actions.startPayment('Other Land Service Fee','${p.id}',500)">${t("pay_now")}</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== PAYMENTS ===================== */
+VIEWS.payments = function(){
+  const flow = STATE.paymentFlow;
+  const methods = [
+    {id:"bKash", label:"bKash"}, {id:"Rocket", label:"Rocket"}, {id:"Nagad", label:"Nagad"},
+    {id:"Visa/Mastercard", label:"Card"}, {id:"Bank", label:"Bank"}
+  ];
+  let flowHTML = "";
+  if (!flow){
+    flowHTML = `<div class="empty-state"><div class="icon">💳</div><p>${STATE.lang==='bn'?'শুরু করতে কর/খাজনা বা ফি পাতা থেকে একটি পেমেন্ট নির্বাচন করুন।':'Start a payment from the Tax/Khajna page or a fee listing to see the demo flow here.'}</p>
+      <button class="btn" onclick="nav('tax')">${t("tax_title")} →</button></div>`;
+  } else {
+    const p = findProperty(flow.propId);
+    if (flow.step===1){
+      flowHTML = `
+      <div class="step-pills">
+        <span class="step-pill active">${t("select_method")}</span>
+        <span class="step-pill">${t("review_amount")}</span>
+      </div>
+      <p><strong>${flow.category}</strong> — ${p?p.mouza+', '+p.upazila:''} · ${t("amount")}: <strong>${fmtMoney(flow.amount)}</strong></p>
+      <p style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-500);margin-bottom:6px">${STATE.lang==='bn'?'মোবাইল আর্থিক সেবা':'Mobile Financial Services'}</p>
+      <div class="method-grid" style="margin-bottom:14px">
+        ${methods.slice(0,3).map(m=>`<button class="method-card ${flow.method===m.id?'selected':''}" onclick="Actions.pickMethod('${m.id}')"><div class="logo">${m.label}</div>Demo</button>`).join("")}
+      </div>
+      <p style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-500);margin-bottom:6px">${STATE.lang==='bn'?'ব্যাংক / কার্ড':'Bank / Card'}</p>
+      <div class="method-grid">
+        ${methods.slice(3).map(m=>`<button class="method-card ${flow.method===m.id?'selected':''}" onclick="Actions.pickMethod('${m.id}')"><div class="logo">${m.label}</div>Demo</button>`).join("")}
+      </div>
+      <div style="margin-top:18px;display:flex;justify-content:flex-end">
+        <button class="btn" onclick="Actions.paymentToStep2()">${t("next")} →</button>
+      </div>`;
+    } else if (flow.step===2){
+      flowHTML = `
+      <div class="step-pills">
+        <span class="step-pill done">${t("select_method")}</span>
+        <span class="step-pill active">${t("review_amount")}</span>
+      </div>
+      <div class="card" style="background:#fdfcf8">
+        <div class="kv">
+          <div class="k">${STATE.lang==='bn'?'সেবা':'Service'}</div><div class="v">${flow.category}</div>
+          <div class="k">${STATE.lang==='bn'?'সম্পত্তি':'Property'}</div><div class="v">${p?p.mouza+', '+p.upazila+' (Khatian '+p.khatian+')':'-'}</div>
+          <div class="k">${t("method")}</div><div class="v">${flow.method} — Demo</div>
+          <div class="k" style="font-weight:700">${t("amount")}</div><div class="v" style="font-weight:800;color:var(--green-800)">${fmtMoney(flow.amount)}</div>
+        </div>
+      </div>
+      <div class="helper-note" style="margin-top:12px">${t("demo_payment_label")}. This is a university prototype — no real card numbers, PINs, or OTPs are requested.</div>
+      <div style="margin-top:18px;display:flex;justify-content:space-between">
+        <button class="btn secondary" onclick="Actions.paymentBack()">← ${t("back")}</button>
+        <button class="btn" onclick="Actions.confirmPayment()">${t("confirm_payment")}</button>
+      </div>`;
+    } else if (flow.step===3){
+      flowHTML = `<div class="empty-state"><div class="icon">⏳</div><p>${t("processing")}</p></div>`;
+    } else if (flow.step===4){
+      const txn = flow.txn;
+      flowHTML = `
+      <div class="card" id="receipt-block">
+        <span class="tag green">✔ ${t("payment_success")}</span>
+        <div class="receipt" style="margin-top:14px">
+          <h4>NLIVS Demo Payment Receipt</h4>
+          <div>${t("transaction_id")}: <strong>${txn.txnId}</strong></div>
+          <div>${t("amount")}: <strong>${fmtMoney(txn.amount)}</strong></div>
+          <div>${t("status")}: <strong>${txn.status}</strong></div>
+          <div>${t("date")}: <strong>${txn.date}</strong></div>
+          <div>${t("method")}: <strong>${txn.method}</strong></div>
+          <div>Property: <strong>${p?p.id:''} — ${p?p.mouza:''}</strong></div>
+        </div>
+      </div>
+      <div class="quick-actions no-print" style="margin-top:14px">
+        <button class="btn secondary" onclick="window.print()">🖨 ${t("download_receipt")}</button>
+        <button class="btn" onclick="Actions.newPayment()">${STATE.lang==='bn'?'নতুন পেমেন্ট':'New payment'}</button>
+      </div>`;
+    }
+  }
+  return `<section class="section"><div class="container">
+    ${pageHead(t("payments_title"), t("payments_sub"))}
+    <div class="grid cols-2" style="align-items:start">
+      <div class="card">${flowHTML}</div>
+      <div class="card">
+        <h3 style="margin-top:0">${t("payment_history")}</h3>
+        <table class="data">
+          <thead><tr><th>${t("date")}</th><th>${STATE.lang==='bn'?'ধরন':'Type'}</th><th>${t("amount")}</th><th>${t("method")}</th><th>${t("status")}</th></tr></thead>
+          <tbody>${PAYMENTS.slice(0,8).map(tx=>`<tr><td>${tx.date}</td><td>${tx.type}</td><td>${fmtMoney(tx.amount)}</td><td>${tx.method}</td><td><span class="tag green">${tx.status}</span></td></tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== COMPLAINTS & DISPUTES ===================== */
+VIEWS.complaints = function(){
+  const categories = ["Ownership dispute","Mutation problem","Incorrect land record","Boundary issue","Tax/payment problem","Document issue","Other land-related complaint"];
+  const bnCat = {"Ownership dispute":"মালিকানা বিরোধ","Mutation problem":"মিউটেশন সমস্যা","Incorrect land record":"ভুল জমি রেকর্ড","Boundary issue":"সীমানা সমস্যা","Tax/payment problem":"কর/পেমেন্ট সমস্যা","Document issue":"দলিল সমস্যা","Other land-related complaint":"অন্যান্য ভূমি-সংক্রান্ত অভিযোগ"};
+  const formBlock = STATE.complaintSubmittedRef ? `
+    <div class="card">
+      <span class="tag green">✔ ${t("success")}</span>
+      <p style="margin-top:10px">${t("submitted_ref")} <strong style="font-family:var(--font-mono)">${STATE.complaintSubmittedRef}</strong></p>
+      <div class="quick-actions">
+        <button class="btn secondary" onclick="document.getElementById('track-ref').value='${STATE.complaintSubmittedRef}';Actions.resetComplaintForm();Actions.trackComplaint();nav('complaint-track')">${t("track_complaint")} →</button>
+        <button class="btn" onclick="Actions.resetComplaintForm()">${STATE.lang==='bn'?'নতুন অভিযোগ':'New complaint'}</button>
+      </div>
+    </div>` : `
+    <div class="card">
+      <div class="form-row">
+        <div class="field"><label>${t("applicant_name")} *</label><input id="c-name"></div>
+        <div class="field"><label>${t("mobile_number")} *</label><input id="c-mobile" placeholder="017XXXXXXXX"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>${t("property_optional")}</label>
+          <select id="c-property">
+            <option value="">—</option>
+            ${PROPERTIES.map(p=>`<option value="${p.id}" ${STATE.prefillPropertyId===p.id?'selected':''}>${p.id} — ${p.mouza}, ${p.upazila}</option>`).join("")}
+          </select>
+        </div>
+        <div class="field"><label>${t("complaint_category")} *</label>
+          <select id="c-category"><option value="">—</option>${categories.map(c=>`<option value="${c}">${STATE.lang==='bn'?bnCat[c]:c}</option>`).join("")}</select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px"><label>${t("description")} *</label><textarea id="c-desc" rows="4"></textarea></div>
+      <div class="form-row">
+        <div class="field"><label>${STATE.lang==='bn'?'সহায়ক দলিল আপলোড':'Supporting document upload'}</label><input type="file" id="c-file"></div>
+        <div class="field"><label>${t("preferred_contact")}</label>
+          <select id="c-contact"><option>Mobile / SMS</option><option>Email</option><option>In person at land office</option></select>
+        </div>
+      </div>
+      <button class="btn" onclick="Actions.submitComplaint()">${t("submit")}</button>
+    </div>`;
+  return `<section class="section"><div class="container">
+    ${pageHead(t("complaints_title"), t("complaints_sub"))}
+    <div class="grid cols-2" style="align-items:start">
+      ${formBlock}
+      <div class="card">
+        <h3 style="margin-top:0">${t("track_complaint")}</h3>
+        <div class="field"><label>${t("enter_complaint_ref")}</label><input id="track-ref" placeholder="CMP-2026-008721"></div>
+        <button class="btn secondary" style="margin-top:10px" onclick="Actions.trackComplaint()">${t("track_btn")}</button>
+        ${trackComplaintResultHTML()}
+      </div>
+    </div>
+  </div></section>`;
+};
+function trackComplaintResultHTML(){
+  if (STATE.complaintTrackResult === undefined) return "";
+  if (STATE.complaintTrackResult === null) return `<div class="error-text" style="margin-top:12px">${t("not_found")}</div>`;
+  const c = STATE.complaintTrackResult;
+  return `<div class="divider"></div>
+    <div class="kv" style="margin-bottom:12px">
+      <div class="k">${STATE.lang==='bn'?'বিষয়':'Category'}</div><div class="v">${c.category}</div>
+      <div class="k">${t("date")}</div><div class="v">${c.submitted}</div>
+    </div>
+    <div class="timeline">
+      ${c.stages.map((s,i)=>`<div class="tl-item ${i<c.status?'done':(i===c.status?'current':'pending')}"><h5>${s}</h5></div>`).join("")}
+    </div>`;
+}
+VIEWS["complaint-track"] = VIEWS.complaints;
+
+/* ===================== DOCUMENTS ===================== */
+VIEWS.documents = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("documents_title"), t("documents_sub"))}
+    <div class="grid cols-3">
+      ${PROPERTIES.map(p=>`
+        <div class="card">
+          <h4 style="margin-top:0">${p.id} — ${p.mouza}</h4>
+          <table class="data"><tbody>
+            ${p.documents.map(d=>`<tr><td>${d.name}</td><td><button class="btn small secondary" onclick="toast('${STATE.lang==='bn'?'ডেমো ডাউনলোড':'Demo download'}')">⬇</button></td></tr>`).join("")}
+          </tbody></table>
+          <button class="btn small block" style="margin-top:10px" onclick="Actions.openProperty('${p.id}')">${t("view_profile")}</button>
+        </div>`).join("")}
+    </div>
+  </div></section>`;
+};
+
+/* ===================== APPLICATION TRACKING ===================== */
+VIEWS.apptrack = function(){
+  if (STATE.prefillAppId){ setTimeout(()=>{ const el=document.getElementById("app-id"); if(el){el.value=STATE.prefillAppId; STATE.prefillAppId=null; Actions.trackApplication();} },0); }
+  let resultHTML = "";
+  if (STATE.appTrackResult === null) resultHTML = `<div class="error-text" style="margin-top:14px">${t("app_not_found")}</div>`;
+  else if (STATE.appTrackResult){
+    const a = STATE.appTrackResult;
+    const p = findProperty(a.propId);
+    resultHTML = `<div class="card" style="margin-top:16px">
+      <div class="kv">
+        <div class="k">${STATE.lang==='bn'?'আবেদনের ধরন':'Application type'}</div><div class="v">${a.type}</div>
+        <div class="k">Property</div><div class="v">${p?p.mouza+', '+p.upazila+' ('+p.id+')':'-'}</div>
+        <div class="k">${t("date")}</div><div class="v">${a.submitted}</div>
+      </div>
+      <div class="divider"></div>
+      <div class="timeline">
+        ${a.stages.map((s,i)=>`<div class="tl-item ${i<a.stage-1?'done':(i===a.stage-1?'current':'pending')}"><h5>${s}${(i===a.stage-1 && a.result)?': '+a.result:''}</h5></div>`).join("")}
+      </div>
+    </div>`;
+  }
+  return `<section class="section"><div class="container">
+    ${pageHead(t("track_app_title"))}
+    <div class="card" style="max-width:640px">
+      <div class="field"><label>${t("enter_app_id")}</label><input id="app-id" placeholder="MUT-2026-003821"></div>
+      <button class="btn" style="margin-top:10px" onclick="Actions.trackApplication()">${t("track_btn")}</button>
+      ${resultHTML}
+      <p class="helper-note" style="margin-top:16px">${STATE.lang==='bn'?'নমুনা আইডি চেষ্টা করুন':'Try a demo ID'}: MUT-2026-003821, MUT-2026-004150, MUT-2026-002093</p>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== NOTIFICATIONS ===================== */
+VIEWS.notifications = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("notifications_title"))}
+    <div class="card" style="max-width:720px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <button class="btn small secondary" onclick="Actions.markAllRead()">${t("mark_all_read")}</button>
+      </div>
+      ${NOTIFICATIONS.length ? NOTIFICATIONS.map(n=>`
+        <div class="notif-item ${n.read?'':'unread'}">
+          ${n.read?'':'<div class="dot"></div>'}
+          <div style="flex:1">
+            <div>${STATE.lang==='bn'?n.bn:n.en}</div>
+            ${!n.read?`<button class="btn small secondary" style="margin-top:6px" onclick="Actions.markNotifRead(${n.id})">${t("mark_read")}</button>`:''}
+          </div>
+        </div>`).join("") : `<div class="empty-state">${t("no_notifications")}</div>`}
+    </div>
+  </div></section>`;
+};
+
+/* ===================== AI ASSISTANT ===================== */
+VIEWS.ai = function(){
+  if (STATE.chatMessages.length===0) STATE.chatMessages.push({role:"bot", text: t("ai_intro")});
+  const suggestions = ["How can I pay Khajna?","How do I apply for mutation?","How can I track my application?","খাজনা কিভাবে দিব?","কিভাবে অভিযোগ করব?"];
+  return `<section class="section"><div class="container">
+    ${pageHead(t("ai_title"), t("ai_sub"))}
+    <span class="tag demo">${t("ai_demo_mode")}</span>
+    <div class="card" style="max-width:760px;margin-top:12px">
+      <div class="chat-window" id="chat-window">
+        ${STATE.chatMessages.map(m=>`<div class="msg ${m.role==='user'?'user':'bot'} ${isBangla(m.text)?'bn':''}">${esc(m.text)}</div>`).join("")}
+      </div>
+      <div class="chat-suggest">${suggestions.map(s=>`<button class="chip" onclick="Actions.chatChip('${s.replace(/'/g,"\\'")}')">${s}</button>`).join("")}</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="chat-input" placeholder="${t('ai_placeholder')}" style="flex:1;border:1px solid var(--line);border-radius:7px;padding:10px" onkeydown="if(event.key==='Enter')Actions.sendChat()">
+        <button class="btn" onclick="Actions.sendChat()">${t("ai_send")}</button>
+      </div>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== DIGITAL DEED PREPARATION ===================== */
+VIEWS.deed = function(){
+  const step = STATE.deedForm.step;
+  const d = STATE.deedForm.data;
+  const stepsLabels = ["seller","buyer","land_details","transaction_details","witnesses","review","generate_draft"];
+  const pills = `<div class="step-pills">${stepsLabels.map((s,i)=>`<span class="step-pill ${i+1===step?'active':(i+1<step?'done':'')}">${i+1}. ${t(s)}</span>`).join("")}</div>`;
+  let body = "";
+  const fld = (key,label,val)=>`<div class="field"><label>${label}</label><input data-deed-field="${key}" value="${esc(val||d[key]||'')}"></div>`;
+
+  if (step===1){
+    body = `<div class="form-row">${fld('sellerName',t('full_name'))}${fld('sellerNid',t('nid_placeholder'))}</div>
+      <div class="form-row">${fld('sellerAddress',t('address'))}${fld('sellerContact',t('contact'))}</div>`;
+  } else if (step===2){
+    body = `<div class="form-row">${fld('buyerName',t('full_name'))}${fld('buyerNid',t('nid_placeholder'))}</div>
+      <div class="form-row">${fld('buyerAddress',t('address'))}${fld('buyerContact',t('contact'))}</div>`;
+  } else if (step===3){
+    body = `<div class="form-row">${fld('landDistrict',t('district'))}${fld('landUpazila',t('upazila'))}</div>
+      <div class="form-row">${fld('landMouza',t('mouza'))}${fld('landKhatian',t('khatian'))}</div>
+      <div class="form-row">${fld('landDag',t('dag'))}${fld('landArea',t('land_area'))}</div>
+      <div class="form-row">${fld('landClass',t('classification'))}<div></div></div>`;
+  } else if (step===4){
+    body = `<div class="form-row">${fld('saleValue',t('sale_value'))}${fld('transType',t('transaction_type'))}</div>
+      <div class="form-row">${fld('paymentInfo',t('payment_info'))}<div></div></div>`;
+  } else if (step===5){
+    body = `<div class="form-row">${fld('witness1',t('witness1'))}${fld('witness2',t('witness2'))}</div>`;
+  } else if (step===6){
+    body = `<div class="kv">
+      <div class="k">${t('seller')}</div><div class="v">${d.sellerName||'-'} (${d.sellerNid||'-'})</div>
+      <div class="k">${t('buyer')}</div><div class="v">${d.buyerName||'-'} (${d.buyerNid||'-'})</div>
+      <div class="k">${t('land_details')}</div><div class="v">${d.landDistrict||''}, ${d.landUpazila||''}, ${d.landMouza||''} — Khatian ${d.landKhatian||''}, Dag ${d.landDag||''}</div>
+      <div class="k">${t('transaction_details')}</div><div class="v">৳ ${d.saleValue||'-'} (${d.transType||'-'})</div>
+      <div class="k">${t('witnesses')}</div><div class="v">${d.witness1||'-'}, ${d.witness2||'-'}</div>
+    </div>
+    <button class="btn" style="margin-top:16px" onclick="Actions.deedGenerate()">${t('generate_draft')} →</button>`;
+  } else if (step===7){
+    body = STATE.deedGenerated ? `
+      <div class="disclaimer-box">${t('deed_disclaimer')}</div>
+      <div class="receipt" style="margin-top:14px">
+        <h4>DEMO LAND DOCUMENT DRAFT</h4>
+        <p><strong>${t('seller')}:</strong> ${d.sellerName||'-'} — NID: ${d.sellerNid||'-'}<br>${d.sellerAddress||''} · ${d.sellerContact||''}</p>
+        <p><strong>${t('buyer')}:</strong> ${d.buyerName||'-'} — NID: ${d.buyerNid||'-'}<br>${d.buyerAddress||''} · ${d.buyerContact||''}</p>
+        <p><strong>${t('land_details')}:</strong> ${d.landDistrict||''}, ${d.landUpazila||''}, ${d.landMouza||''} — Khatian ${d.landKhatian||''}, Dag ${d.landDag||''}, ${d.landArea||''}, ${d.landClass||''}</p>
+        <p><strong>${t('transaction_details')}:</strong> ৳ ${d.saleValue||'-'} — ${d.transType||'-'}<br>${d.paymentInfo||''}</p>
+        <p><strong>${t('witnesses')}:</strong> ${d.witness1||'-'}, ${d.witness2||'-'}</p>
+      </div>
+      <div class="quick-actions no-print" style="margin-top:14px">
+        <button class="btn secondary" onclick="window.print()">🖨 ${t('print')}</button>
+        <button class="btn secondary" onclick="Actions.deedDownload()">⬇ ${t('download')}</button>
+        <button class="btn" onclick="Actions.deedRestart()">${STATE.lang==='bn'?'নতুন দলিল':'New draft'}</button>
+      </div>` : `<div class="empty-state">${STATE.lang==='bn'?'পর্যালোচনা ধাপ থেকে খসড়া তৈরি করুন।':'Generate the draft from the Review step.'}</div>`;
+  }
+
+  const nav_ = step<7 ? `<div class="quick-actions no-print" style="margin-top:18px;justify-content:space-between;display:flex">
+      <button class="btn secondary" ${step===1?'disabled':''} onclick="Actions.deedBack()">← ${t('back')}</button>
+      ${step<6 ? `<button class="btn" onclick="Actions.deedNext()">${t('next')} →</button>` : ''}
+    </div>` : '';
+
+  return `<section class="section"><div class="container">
+    ${pageHead(t("deed_title"), t("deed_sub"))}
+    <div class="disclaimer-box no-print" style="margin-bottom:16px">${t("deed_disclaimer")}</div>
+    <div class="card" style="max-width:760px">
+      ${pills}
+      ${body}
+      ${nav_}
+    </div>
+  </div></section>`;
+};
+
+/* ===================== HELP / ABOUT ===================== */
+VIEWS.help = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("help_title"))}
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0">${STATE.lang==='bn'?'হটলাইন':'Helpline'}</h3>
+        <div class="helpline-big" style="color:var(--green-800)">16122</div>
+        <p style="font-size:13.5px">${STATE.lang==='bn'?'ভূমি সংক্রান্ত সরকারি তথ্যের জন্য এই নম্বরে কল করুন।':'Call this number for official land-related information from the Ministry of Land.'}</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">${STATE.lang==='bn'?'দ্রুত সাহায্য':'Quick help'}</h3>
+        <ul style="font-size:13.5px;line-height:2">
+          <li><a href="#" onclick="nav('search');return false;">${t("nav_search")}</a></li>
+          <li><a href="#" onclick="nav('apptrack');return false;">${t("nav_track")}</a></li>
+          <li><a href="#" onclick="nav('complaints');return false;">${t("nav_complaints")}</a></li>
+          <li><a href="#" onclick="nav('ai');return false;">${t("ai_title")}</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">${STATE.lang==='bn'?'প্রবেশযোগ্যতা ও গোপনীয়তা':'Accessibility & Privacy'}</h3>
+      <p style="font-size:13.5px">${STATE.lang==='bn'?'এই প্রোটোটাইপটি কীবোর্ড নেভিগেশন, উচ্চ কনট্রাস্ট টেক্সট, এবং বাংলা ফন্ট (Noto Sans Bengali) সমর্থন করে। এটি কোনো প্রকৃত ব্যক্তিগত তথ্য (এনআইডি, পাসওয়ার্ড, কার্ড নম্বর) সংগ্রহ করে না — সব ফর্ম ডেমো উদ্দেশ্যে।':'This prototype supports keyboard navigation, high-contrast text, and Bangla font rendering (Noto Sans Bengali). It never collects real personal information (NID, passwords, card numbers) — all forms are for demonstration only.'}</p>
+    </div>
+  </div></section>`;
+};
+
+VIEWS.about = function(){
+  return `<section class="section"><div class="container">
+    ${pageHead(t("about_title"))}
+    <div class="card">
+      <p>${STATE.lang==='bn'
+        ? 'এটি একটি প্রস্তাবিত ডিজিটাল ভূমি ব্যবস্থাপনা তথ্য সিস্টেম (NLIVS) এর একটি কার্যকরী প্রোটোটাইপ, যা North South University (NSU) এর MIS107 কোর্সের জন্য তৈরি। এটি ভূমি মন্ত্রণালয়ের সাথে আনুষ্ঠানিকভাবে সংযুক্ত নয়।'
+        : 'This is a working prototype of a proposed National Land Information and Verification System (NLIVS), built for the MIS107 course at North South University (NSU). It is not officially connected to the real Ministry of Land database.'}</p>
+      <div class="divider"></div>
+      <h4>${STATE.lang==='bn'?'সিস্টেম প্রকার':'System types demonstrated'}</h4>
+      <ul style="font-size:13.5px;line-height:1.9">
+        <li><strong>TPS</strong> — ${STATE.lang==='bn'?'দৈনিক নিবন্ধন, মিউটেশন ও কর আদায় (পেমেন্ট প্রবাহ, মিউটেশন ট্র্যাকিং)':'Daily registration, mutation, and tax collection (payment flow, mutation tracking)'}</li>
+        <li><strong>MIS/DSS</strong> — ${STATE.lang==='bn'?'অভিযোগ, রাজস্ব ও প্রক্রিয়াকরণ ব্যাকলগ নিয়ে প্রতিবেদন (প্রশাসনিক ড্যাশবোর্ড)':'Reports on disputes, revenue, and processing backlogs (Admin dashboard)'}</li>
+        <li><strong>ESS</strong> — ${STATE.lang==='bn'?'নীতিনির্ধারকদের জন্য জাতীয় ড্যাশবোর্ড':'National dashboards for senior policymakers'}</li>
+      </ul>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== LOGIN ===================== */
+function monitoringDashboardCard(){
+  // Sample/demo status card — replaces any "live" monitoring, since no real backend is connected in this prototype.
+  const now = new Date();
+  const uptimeHrs = 96 + (now.getHours());
+  return `<div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">${t("monitoring_title")} <span class="tag demo">DEMO</span></h3>
+    <p style="color:var(--ink-500);font-size:13px;margin:0 0 14px">${t("monitoring_sub")}</p>
+    <div class="grid cols-4">
+      <div class="kpi"><div class="num">${uptimeHrs}h</div><div class="label">${t("monitoring_uptime")}</div></div>
+      <div class="kpi"><div class="num">${STATE.user ? 1 : 0}</div><div class="label">${t("monitoring_sessions")}</div></div>
+      <div class="kpi"><div class="num" style="color:var(--green-700)">${t("monitoring_api_val")}</div><div class="label">${t("monitoring_api")}</div></div>
+      <div class="kpi"><div class="num" style="color:var(--green-700)">${t("monitoring_db_val")}</div><div class="label">${t("monitoring_db")}</div></div>
+    </div>
+  </div>`;
+}
+VIEWS.login = function(){
+  return `<section class="section"><div class="container">
+    <div class="login-wrap">
+      ${pageHead(t("login_title"))}
+      <div class="grid cols-2" style="align-items:start">
+        <div class="card">
+          <h3 style="margin-top:0">${t("citizen_login")}</h3>
+          <div class="field"><label>${t("mobile_number")}</label><input value="${DEMO_USERS.citizen.mobile}" disabled></div>
+          <div class="field" style="margin-top:8px"><label>${t("password")}</label><input type="password" value="${DEMO_USERS.citizen.password}" disabled></div>
+          <div class="demo-account">${t("demo_account")}: ${DEMO_USERS.citizen.mobile} / ${DEMO_USERS.citizen.password}</div>
+          <button class="btn block" style="margin-top:12px" onclick="Actions.loginCitizenDemo()">${t("use_demo")} →</button>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">${t("officer_login")}</h3>
+          <div class="field"><label>${t("username")}</label><input value="${DEMO_USERS.officer.username}" disabled></div>
+          <div class="field" style="margin-top:8px"><label>${t("password")}</label><input type="password" value="${DEMO_USERS.officer.password}" disabled></div>
+          <div class="demo-account">${t("demo_account")}: ${DEMO_USERS.officer.username} / ${DEMO_USERS.officer.password}</div>
+          <button class="btn secondary block" style="margin-top:12px" onclick="Actions.loginOfficerDemo()">${t("use_demo")} →</button>
+        </div>
+      </div>
+      ${monitoringDashboardCard()}
+    </div>
+  </div></section>`;
+};
+
+/* ===================== CITIZEN DASHBOARD ===================== */
+VIEWS["dashboard-citizen"] = function(){
+  if (!STATE.user) return VIEWS.login();
+  const myProps = PROPERTIES.filter(p=>DEMO_USERS.citizen.properties.includes(p.id));
+  const myApps = APPLICATIONS.filter(a=>DEMO_USERS.citizen.properties.includes(a.propId));
+  const myPayments = PAYMENTS.filter(pm=>DEMO_USERS.citizen.properties.includes(pm.propId));
+  const dueCount = myProps.filter(p=>p.taxStatus==='Due').length;
+  return `<section class="section"><div class="container">
+    ${pageHead(t("citizen_dashboard"), STATE.lang==='bn'?('স্বাগতম, ' + STATE.user.name):('Welcome, ' + STATE.user.name))}
+    <div class="grid cols-4" style="margin-bottom:18px">
+      <div class="kpi"><div class="num">${myProps.length}</div><div class="label">${t("my_properties")}</div></div>
+      <div class="kpi"><div class="num">${myApps.length}</div><div class="label">${t("applications")}</div></div>
+      <div class="kpi"><div class="num">${dueCount}</div><div class="label">${t("due")}</div></div>
+      <div class="kpi"><div class="num">${myPayments.length}</div><div class="label">${t("paid")}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">${t("quick_actions")}</h3>
+      <div class="quick-actions">
+        <button class="btn small secondary" onclick="nav('search')">🔎 ${t("nav_search")}</button>
+        <button class="btn small secondary" onclick="nav('tax')">🧾 ${t("pay_khajna")}</button>
+        <button class="btn small secondary" onclick="nav('apptrack')">🔁 ${t("nav_track")}</button>
+        <button class="btn small secondary" onclick="nav('landmap')">🗺️ ${t("nav_map")}</button>
+        <button class="btn small secondary" onclick="nav('complaints')">⚠️ ${t("nav_complaints")}</button>
+        <button class="btn small secondary" onclick="nav('ai')">🤖 ${t("ai_title")}</button>
+      </div>
+    </div>
+    <div class="grid cols-2" style="align-items:start">
+      <div class="card">
+        <h3 style="margin-top:0">${t("my_properties")}</h3>
+        ${myProps.map(propertyCard).join("")}
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">${t("applications")}</h3>
+        <table class="data"><tbody>
+          ${myApps.map(a=>`<tr><td>${a.id}</td><td>${a.type}</td><td>${t("stage")} ${a.stage}/5</td><td><button class="btn small secondary" onclick="Actions.openAppTrackFor('${a.id}')">${t("view_all")}</button></td></tr>`).join("")}
+        </tbody></table>
+        <div class="divider"></div>
+        <h3 style="margin:0 0 8px">${t("nav_notifications")}</h3>
+        ${NOTIFICATIONS.slice(0,3).map(n=>`<div class="notif-item ${n.read?'':'unread'}">${n.read?'':'<div class="dot"></div>'}<div>${STATE.lang==='bn'?n.bn:n.en}</div></div>`).join("")}
+        <button class="btn small secondary" style="margin-top:10px" onclick="nav('notifications')">${t("view_all")} →</button>
+      </div>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== ADMIN / MIS DASHBOARD ===================== */
+VIEWS["dashboard-admin"] = function(){
+  if (!STATE.user) return VIEWS.login();
+  const filter = STATE.adminDistrictFilter;
+  const props = filter==='all' ? PROPERTIES : PROPERTIES.filter(p=>p.district===filter);
+  const totalTaxCollected = PAYMENTS.reduce((s,p)=>s+p.amount,0);
+  const outstanding = PROPERTIES.filter(p=>p.taxStatus==='Due').reduce((s,p)=>s+taxFor(p).total,0);
+
+  // Simple, dependency-free data summaries (no chart library / no internet required)
+  const byDistrict = {}; DISTRICTS.forEach(d=>byDistrict[d]=0);
+  PROPERTIES.forEach(p=>byDistrict[p.district]++);
+  APPLICATIONS.forEach(a=>{ const p=findProperty(a.propId); if(p) byDistrict[p.district]+=2; });
+  const maxDistrict = Math.max(1, ...Object.values(byDistrict));
+
+  const mutLabels = ["Submitted","Doc. Verification","Field Verification","Officer Review","Approved/Rejected"];
+  const mutCounts = [0,0,0,0,0];
+  APPLICATIONS.forEach(a=>{ mutCounts[a.stage-1] = (mutCounts[a.stage-1]||0)+1; });
+  const mutTotal = Math.max(1, mutCounts.reduce((a,b)=>a+b,0));
+
+  const catCounts = {}; COMPLAINTS.forEach(c=>{ catCounts[c.category]=(catCounts[c.category]||0)+1; });
+  const catTotal = Math.max(1, Object.values(catCounts).reduce((a,b)=>a+b,0));
+
+  const barRow = (label, value, max, color) => `
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-700);margin-bottom:3px"><span>${label}</span><span>${value}</span></div>
+      <div style="background:var(--line-soft);border-radius:6px;height:10px;overflow:hidden"><div style="width:${Math.round(value/max*100)}%;background:${color};height:100%"></div></div>
+    </div>`;
+
+  return `<section class="section"><div class="container">
+    ${pageHead(t("admin_dashboard"), STATE.lang==='bn'?('স্বাগতম, ' + STATE.user.name):('Welcome, ' + STATE.user.name))}
+    <div class="field" style="max-width:260px;margin-bottom:16px">
+      <label>${t("filter_by_district")}</label>
+      <select onchange="Actions.setAdminFilter(this.value)">
+        <option value="all" ${filter==='all'?'selected':''}>${t("all_districts")}</option>
+        ${DISTRICTS.map(d=>`<option value="${d}" ${filter===d?'selected':''}>${d}</option>`).join("")}
+      </select>
+    </div>
+    <div class="grid cols-4" style="margin-bottom:18px">
+      <div class="kpi"><div class="num">${props.length}</div><div class="label">${t("total_properties")}</div></div>
+      <div class="kpi"><div class="num">${props.length + 340}</div><div class="label">${t("total_records")}</div></div>
+      <div class="kpi"><div class="num">${APPLICATIONS.filter(a=>a.stage<5).length}</div><div class="label">${t("pending_mutations")}</div></div>
+      <div class="kpi"><div class="num">${COMPLAINTS.filter(c=>c.status===3).length}</div><div class="label">${t("resolved_complaints")}</div></div>
+      <div class="kpi"><div class="num">${PROPERTIES.filter(p=>p.dispute).length}</div><div class="label">${t("active_disputes")}</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(totalTaxCollected)}</div><div class="label">${t("tax_collected")}</div></div>
+      <div class="kpi"><div class="num">${fmtMoney(outstanding)}</div><div class="label">${t("outstanding_tax")}</div></div>
+      <div class="kpi"><div class="num">${APPLICATIONS.length}</div><div class="label">${t("applications_processed")}</div></div>
+    </div>
+
+    <div class="grid cols-2" style="margin-bottom:16px">
+      <div class="card">
+        <h3 style="margin-top:0">${t("citizen_login")} <span class="tag demo">DEMO</span></h3>
+        <div class="field"><label>${t("mobile_number")}</label><input value="${DEMO_USERS.citizen.mobile}" disabled></div>
+        <div class="field" style="margin-top:8px"><label>${t("password")}</label><input type="password" value="${DEMO_USERS.citizen.password}" disabled></div>
+        <div class="demo-account">${t("demo_account")}: ${DEMO_USERS.citizen.mobile} / ${DEMO_USERS.citizen.password}</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">${t("officer_login")} <span class="tag demo">DEMO</span></h3>
+        <div class="field"><label>${t("username")}</label><input value="${DEMO_USERS.officer.username}" disabled></div>
+        <div class="field" style="margin-top:8px"><label>${t("password")}</label><input type="password" value="${DEMO_USERS.officer.password}" disabled></div>
+        <div class="demo-account">${t("demo_account")}: ${DEMO_USERS.officer.username} / ${DEMO_USERS.officer.password}</div>
+      </div>
+    </div>
+
+    ${monitoringDashboardCard()}
+
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card"><h4 style="margin-top:0">${t("apps_by_district")}</h4>
+        ${Object.entries(byDistrict).map(([d,v])=>barRow(d, v, maxDistrict, "#0b5e40")).join("")}
+      </div>
+      <div class="card"><h4 style="margin-top:0">${t("mutation_status_chart")}</h4>
+        ${mutLabels.map((l,i)=>barRow(l, mutCounts[i]||0, mutTotal, "#a97b1f")).join("")}
+      </div>
+      <div class="card"><h4 style="margin-top:0">${t("complaint_categories_chart")}</h4>
+        ${Object.entries(catCounts).map(([c,v])=>barRow(c, v, catTotal, "#c62031")).join("")}
+      </div>
+      <div class="card"><h4 style="margin-top:0">${t("tax_trend")}</h4>
+        ${["Mar","Apr","May","Jun","Jul","Aug"].map((m,i)=>barRow(m, [38,41,44,47,52,58][i], 58, "#0f7a4f")).join("")}
+      </div>
+    </div>
+  </div></section>`;
+};
+
+/* ===================== INIT ===================== */
+document.addEventListener("DOMContentLoaded", ()=>{
+  const initialHash = location.hash.replace(/^#\//,"");
+  if (initialHash){
+    const parts = initialHash.split("/");
+    STATE.route = parts[0] || "home";
+    STATE.params = parts[1] ? { id: decodeURIComponent(parts[1]) } : {};
+  }
+  render();
+});
+
+</script>
+</body>
+</html>
